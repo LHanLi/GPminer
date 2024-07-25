@@ -46,6 +46,7 @@ class Score():
             elif i[0] not in already:
                 already.append(i[0])
                 exp.append(i)
+        exp = exp[:self.max_exp_len]
         # 除以最大公因数
         ws = [i[2] for i in exp] 
         smaller=int(min(ws))
@@ -58,8 +59,6 @@ class Score():
         def takewsort(one):
             return one[::-1]
         exp.sort(key=takewsort, reverse=True)
-        if len(exp)>self.max_exp_len:
-            return exp[:self.max_exp_len]
         self.exp = exp
     # 比较打分因子大小
     def compare(self, s0):
