@@ -1,2 +1,2 @@
 # __init__.py
-from FreeBack import demo,eval,gen,ind,popu
+from GPstrat import demo,eval,gen,ind,popu
