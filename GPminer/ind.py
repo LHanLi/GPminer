@@ -6,7 +6,7 @@ from random import shuffle
 
 # 打分因子(code:'2*False*a+1*True*b, exp:[[2, False, 'a'], [1, True, 'b']])
 class Score():
-    max_exp_len = 4 # 最大因子数
+    max_exp_len = 5 # 最大因子数
     rankall = False # 池子外股票是否参与排序
     # 支持编码和表达式两种形式生成打分因子
     def __init__(self, input=None):
