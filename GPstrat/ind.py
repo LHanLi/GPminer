@@ -1,4 +1,5 @@
 import math
+from random import shuffle
 
 # 种群的个体单元
 
@@ -36,6 +37,7 @@ class Score():
     def uexp(self):
         exp = [] 
         already = []
+        shuffle(self.exp)  # 当因子重复出现时添加一些随机性
         for i in self.exp:
             # 如果出现0或负值则直接跳过
             if i[2]<=0:
