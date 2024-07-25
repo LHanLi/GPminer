@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 from random import shuffle,choice,sample
-from GPstrat import * 
+from GPminer import * 
 from itertools import combinations
 
 

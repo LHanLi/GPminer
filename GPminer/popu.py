@@ -1,6 +1,6 @@
 import pandas as pd
 from random import choice,sample
-from GPstrat import * 
+from GPminer import * 
 
 
 

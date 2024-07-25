@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import FreeBack as FB
-from GPstrat import * 
+from GPminer import * 
 
 
 # 计算个体适应度类
