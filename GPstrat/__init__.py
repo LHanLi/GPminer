@@ -1,2 +1,2 @@
 # __init__.py
-from GPstrat import demo,eval,gen,ind,popu
+from GPstrat import ind,popu,gen,eval,ino
