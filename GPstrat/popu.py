@@ -1,6 +1,6 @@
 import pandas as pd
 from random import choice,sample
-import re, ind
+from GPstrat import * 
 
 
 
