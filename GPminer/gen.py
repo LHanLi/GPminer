@@ -3,7 +3,7 @@ import pandas as pd
 from random import shuffle,choice,sample
 from GPminer import * 
 from itertools import combinations
-
+import time
 
 # 种群繁殖类
 
@@ -144,6 +144,7 @@ class Gen():
         return popu0.codes 
     # 种群繁殖
     def multiply(self, multi=2, prob_dict={}):
+        time0 = time.time()
         # 各算子被执行的概率，如果空则全部算子等概率执形
         if prob_dict=={}:
             opts = [f for f in dir(Gen) if 'mutation' in f or 'cross' in f]
@@ -159,3 +160,6 @@ class Gen():
                 if r<v:
                     break
                 getattr(self, func)()
+                if (time.time()-time0)>60:
+                    print('运行超过60s，直接跳出')
+                    break
