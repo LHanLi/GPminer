@@ -19,18 +19,53 @@ class Gen():
     def mutation_score_dw(self):
         score0 = self.popu.type(list(self.popu.subset().codes)[0])
         exp = score0.exp
+        # 单因子权重无法改变
         if len(exp)==1:
             self.popu.add(score0.code)
             return {score0.code}
-        random_select = np.random.randint(len(exp))
-        # 增加或减少权重，避免因子权重减为0
-        if (np.random.rand()>0.5)|(exp[random_select][2]==1):
-            exp[random_select][2] = exp[random_select][2]+1
+        random_select = np.random.randint(len(exp)) # 选择改变权重的因子 
+        deltawmax = 0.05 # 权重改变幅度小于此阈值
+        sumw = sum([i[2] for i in exp])
+        wbefore = exp[random_select][2]/sumw
+        d = 0
+        mul = 1  # 全部权重乘mul，random_select权重+1, d>0增加权重，d<0减小权重 
+        # 增大/减小乘数， 是/否操作exp 
+        def get_wafter(method=True, opt=False):
+            if method:
+                if opt:
+                    for i in range(len(exp)):
+                        exp[i][2] = exp[i][2]*mul
+                    exp[random_select][2] = exp[random_select][2]+d
+                return (mul*exp[random_select][2]+d)/(mul*sumw+d)
+            else:
+                if opt:
+                    for i in range(len(exp)):
+                        exp[i][2] = exp[i][2]*mul-d
+                    exp[random_select][2] = exp[random_select][2]+d
+                return (mul*exp[random_select][2])/(mul*sumw-(len(exp)-1)*d)
+        if np.random.rand()>0.5:
+            # 如果最小数字为1的话选择增大乘数
+            method = min([i[2] for i in exp])==1
+            while (get_wafter(method, False)-wbefore)<deltawmax:
+                d+=1
+            while (get_wafter(method, False)-wbefore)>deltawmax:
+                mul+=1
+            get_wafter(method, True)
         else:
-            exp[random_select][2] = exp[random_select][2]-1
-        score_new = ind.Score(exp)
-        self.popu.add(score_new.code)
-        return {score_new.code}
+            method = min([i[2] for i in exp])==1
+            while (wbefore-get_wafter(method, False))<deltawmax:
+                d-=1
+            while (wbefore-get_wafter(method, False))>deltawmax:
+                mul+=1
+            get_wafter(method, True)
+        ## 增加或减少权重，避免因子权重减为0
+        #if (np.random.rand()>0.5)|(exp[random_select][2]==1):
+        #    exp[random_select][2] = exp[random_select][2]+1
+        #else:
+        #    exp[random_select][2] = exp[random_select][2]-1
+        #score_new = ind.Score(exp)
+        #self.popu.add(score_new.code)
+        #return {score_new.code}
     # 增减因子,增加因子时随机给一个已存在因子的权重
     def mutation_score_and(self):
         score0 = self.popu.type(list(self.popu.subset().codes)[0])
