@@ -7,6 +7,7 @@ from random import shuffle
 # 打分因子(code:'2*False*a+1*True*b, exp:[[2, False, 'a'], [1, True, 'b']])
 class Score():
     max_exp_len = 5 # 最大因子数
+    max_mul = 10 # 最大因子系数
     rankall = False # 池子外股票是否参与排序
     # 支持编码和表达式两种形式生成打分因子
     def __init__(self, input=None):
@@ -42,6 +43,8 @@ class Score():
             # 如果出现0或负值则直接跳过
             if i[2]<=0:
                 continue
+            elif i[2]>self.max_mul:
+                exp.append([i[0], i[1], self.max_mul])
             # 如果同一因子出现两次以上则只保留第一个
             elif i[0] not in already:
                 already.append(i[0])
