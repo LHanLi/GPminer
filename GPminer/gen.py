@@ -23,13 +23,14 @@ class Gen():
         if len(exp)==1:
             self.popu.add(score0.code)
             return {score0.code}
-        random_select = np.random.randint(len(exp)) # 选择改变权重的因子 
+        random_select = np.random.randint(len(exp)) 
+        print('选择变异第%s个因子权重'%random_select)
         deltawmax = 0.05 # 权重改变幅度小于此阈值
         sumw = sum([i[2] for i in exp])
         wbefore = exp[random_select][2]/sumw
         d = 0
         mul = 1  # 全部权重乘mul，random_select权重+1, d>0增加权重，d<0减小权重 
-        # 增大/减小乘数， 是/否操作exp 
+        # 增大/减小乘数(d为负时相反）， 是/否操作exp 
         def get_wafter(method=True, opt=False):
             if method:
                 if opt:
@@ -50,14 +51,21 @@ class Gen():
                 d+=1
             while (get_wafter(method, False)-wbefore)>deltawmax:
                 mul+=1
+            print('通过%s系数, 增大权重, mul=%s, d=%s'%\
+                  ((lambda x: '增大' if x else '减小')(method), mul, d))
             get_wafter(method, True)
         else:
-            method = min([i[2] for i in exp])==1
+            method = min([i[2] for i in exp])!=1
             while (wbefore-get_wafter(method, False))<deltawmax:
                 d-=1
             while (wbefore-get_wafter(method, False))>deltawmax:
                 mul+=1
+            print('通过%s系数, 减小权重, mul=%s, d=%s'%\
+                  ((lambda x: '减小' if x else '增大')(method), mul, d))
             get_wafter(method, True)
+        score_new = ind.Score(exp)
+        self.popu.add(score_new.code)
+        return {score_new.code}
         ## 增加或减少权重，避免因子权重减为0
         #if (np.random.rand()>0.5)|(exp[random_select][2]==1):
         #    exp[random_select][2] = exp[random_select][2]+1
