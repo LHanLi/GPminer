@@ -159,7 +159,8 @@ class Gen():
             for func,v in prob_ser.items():
                 if r<v:
                     break
+                print(func)
                 getattr(self, func)()
                 if (time.time()-time0)>60:
                     print('运行超过60s，直接跳出')
-                    break
+                    return
