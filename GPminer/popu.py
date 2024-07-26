@@ -16,18 +16,19 @@ class Population():
         return self.type(code)
     def add(self, code):
         if type(code)!=type(set()):
-            self.codes = self.codes|{code}
+            self.codes = self.codes|{self.type(code).code}
         else:
-            self.codes = self.codes|code
+            for c in code:
+                self.codes = self.codes|{self.type(c).code}
     def sub(self, code):
         if type(code)!=type(set()):
-            self.codes = self.codes-{code}
+            self.codes = self.codes-{self.type(code).code}
         else:
-            self.codes = self.codes-code
-    def reset(self, codes):
+            for c in code:
+                self.codes = self.codes|{self.type(c).code}
+    def reset(self, code):
         self.codes = set()
-        for code in codes:
-            self.codes = self.codes|{self.type(code).code}
+        self.add(code)
     def get_name(self, n=3):
         factor_count = {}   # 因子出现频率
         for i in self.codes:
