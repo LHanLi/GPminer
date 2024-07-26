@@ -50,7 +50,7 @@ class Population():
         factor_count = pd.Series(factor_count.values(), index=factor_count.keys())\
                 .sort_values(ascending=False)
         self.name = ';'.join(factor_count.index[:n])
-        return self.name 
+        return self.name
     # 从群体中采样
     def subset(self, size=1):
         popu0 = Population(self.type)
