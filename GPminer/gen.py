@@ -47,19 +47,35 @@ class Gen():
         if np.random.rand()>0.5:
             # 如果最小数字为1的话选择增大乘数
             method = min([i[2] for i in exp])==1
+            time0 = time.time()
             while (get_wafter(method, False)-wbefore)<deltawmax:
                 d+=1
+                if (time.time()-time0)>60:
+                    print('获取d超过60s，直接跳出, d=%s'%d)
+                    return
+            time0 = time.time()
             while (get_wafter(method, False)-wbefore)>deltawmax:
                 mul+=1
+                if (time.time()-time0)>60:
+                    print('获取d超过60s，直接跳出,mul=%s'%mul)
+                    return
             #print('通过%s系数, 增大权重, mul=%s, d=%s'%\
             #      ((lambda x: '增大' if x else '减小')(method), mul, d))
             get_wafter(method, True)
         else:
             method = min([i[2] for i in exp])!=1
+            time0 = time.time()
             while (wbefore-get_wafter(method, False))<deltawmax:
                 d-=1
+                if (time.time()-time0)>60:
+                    print('获取d超过60s，直接跳出, d=%s'%d)
+                    return
+            time0 = time.time()
             while (wbefore-get_wafter(method, False))>deltawmax:
                 mul+=1
+                if (time.time()-time0)>60:
+                    print('获取d超过60s，直接跳出,mul=%s'%mul)
+                    return
             #print('通过%s系数, 减小权重, mul=%s, d=%s'%\
             #      ((lambda x: '减小' if x else '增大')(method), mul, d))
             get_wafter(method, True)
@@ -144,7 +160,6 @@ class Gen():
         return popu0.codes 
     # 种群繁殖
     def multiply(self, multi=2, prob_dict={}):
-        #time0 = time.time()
         # 各算子被执行的概率，如果空则全部算子等概率执形
         if prob_dict=={}:
             opts = [f for f in dir(Gen) if 'mutation' in f or 'cross' in f]
@@ -161,6 +176,3 @@ class Gen():
                     break
                 #print(func)
                 getattr(self, func)()
-                #if (time.time()-time0)>60:
-                #    print('运行超过60s，直接跳出')
-                #    return
