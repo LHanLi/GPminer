@@ -43,8 +43,6 @@ class Score():
             # 如果出现0或负值则直接跳过
             if i[2]<=0:
                 continue
-            elif i[2]>self.max_mul:
-                exp.append([i[0], i[1], self.max_mul])
             # 如果同一因子出现两次以上则只保留第一个
             elif i[0] not in already:
                 already.append(i[0])
@@ -57,7 +55,10 @@ class Score():
             if list(filter(lambda j: j%i!=0,ws)) == []:
                 hcf = i
                 break
-        exp = [[i[0], i[1], i[2]/hcf] for i in exp]
+        # 限制最大同时考虑等权情况
+        exp = [[i[0], i[1], min(i[2]/hcf, self.max_mul)] for i in exp]
+        if max([i[2] for i in exp])==min([i[2] for i in exp]):
+            exp = [[i[0], i[1], 1] for i in exp]
         # 先按权重排序，再按因子名称排序，再按方向排序
         def takewsort(one):
             return one[::-1]
