@@ -46,7 +46,7 @@ class Gen():
                     exp[random_select][2] = exp[random_select][2]+d
                 return (mul*exp[random_select][2]+d)/(mul*sumw+d)
         minw = min([i[2] for i in exp])
-        if np.random.rand()>0:
+        if np.random.rand()>0.5:
             d = 1
             # 如果最小数字*mul大于d则通过减小乘数增大权重，否则选择通过增大系数增大权重
             wafter = get_wafter(minw*mul>d, False)
@@ -64,11 +64,11 @@ class Gen():
             get_wafter(minw*mul>d, True)
         else:
             d = -1
-            # 如果最小数字*mul大于-d的话选择通过减小系数减小权重, 否则通过增大系数减小权重(d<0)
+            # 如果最小数字*mul小于等于-d的话选择通过增大系数减小权重(d<0)
             wafter = get_wafter(minw*mul<=-d, False)
             step = 0
-            while ((wafter-wbefore<deltawmin)|(wafter-wbefore>deltawmax))&(step>max_step): 
-                if (wafter-wbefore)<deltawmax:
+            while ((wbefore-wafter<deltawmin)|(wbefore-wafter>deltawmax))&(step<max_step): 
+                if (wbefore-wafter)<deltawmax:
                     # 权重变化太小减小d
                     d-=1
                 else:
