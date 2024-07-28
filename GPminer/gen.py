@@ -9,7 +9,7 @@ import time
 
 class Gen():
     # 种群，因子库
-    def __init__(self, basket, popu0=None):
+    def __init__(self, basket=[], popu0=None):
         self.basket = basket
         if popu0==None:
             self.popu = popu.Population()
@@ -25,8 +25,9 @@ class Gen():
             return {score0.code}
         random_select = np.random.randint(len(exp)) 
         #print('选择变异第%s个因子权重'%random_select)
-        deltawmax = 0.2 # 权重改变幅度小于此阈值
+        deltawmax = 0.05 # 权重改变幅度小于此阈值
         deltawmin = 0.02 # 权重改变幅度大于此阈值
+        max_step = 100 # 最大的新权重组合寻找步数
         sumw = sum([i[2] for i in exp])
         wbefore = exp[random_select][2]/sumw
         mul = 1  # 全部权重乘mul，random_select权重+1, d>0增加权重，d<0减小权重 
@@ -45,30 +46,35 @@ class Gen():
                     exp[random_select][2] = exp[random_select][2]+d
                 return (mul*exp[random_select][2]+d)/(mul*sumw+d)
         minw = min([i[2] for i in exp])
-        if np.random.rand()>0.5:
+        if np.random.rand()>0:
             d = 1
             # 如果最小数字*mul大于d则通过减小乘数增大权重，否则选择通过增大系数增大权重
             wafter = get_wafter(minw*mul>d, False)
-            while (wafter-wbefore<deltawmin)|(wafter-wbefore>deltawmax): 
+            step = 0
+            while ((wafter-wbefore<deltawmin)|(wafter-wbefore>deltawmax))&(step<max_step): 
                 if (wafter-wbefore)<deltawmax:
                     # 权重变化太小增大d
                     d+=1
                 else:
                     # 权重变化太大增大mul
                     mul+=1
+                step += 1
+                # print(mul, d)
                 wafter = get_wafter(minw*mul>d, False)
             get_wafter(minw*mul>d, True)
         else:
             d = -1
             # 如果最小数字*mul大于-d的话选择通过减小系数减小权重, 否则通过增大系数减小权重(d<0)
             wafter = get_wafter(minw*mul<=-d, False)
-            while (wbefore-wafter<deltawmin)|(wafter-wbefore>deltawmax): 
-                if (wbefore-wafter)<deltawmax:
+            step = 0
+            while ((wafter-wbefore<deltawmin)|(wafter-wbefore>deltawmax))&(step>max_step): 
+                if (wafter-wbefore)<deltawmax:
                     # 权重变化太小减小d
                     d-=1
                 else:
                     # 权重变化太大增大mul
                     mul+=1
+                    step += 1
                 wafter = get_wafter(minw*mul<=-d, False)
             get_wafter(minw*mul<=-d, True)
             #print('通过%s系数, 减小权重, mul=%s, d=%s'%\
