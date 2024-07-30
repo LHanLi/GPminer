@@ -14,21 +14,28 @@ class Population():
         self.codes = set()
     def code2exp(self, code):
         return self.type(code)
-    def add(self, code):
+    # 默认不检查重复
+    def add(self, code, check=False):
         if type(code)!=type(set()):
             self.codes = self.codes|{self.type(code).code}
         else:
-            for c in code:
-                self.codes = self.codes|{self.type(c).code}
-    def sub(self, code):
+            if check:
+                for c in code:
+                    self.codes = self.codes|{self.type(c).code}
+            else:
+                self.codes = self.codes|code
+    def sub(self, code, check=False):
         if type(code)!=type(set()):
             self.codes = self.codes-{self.type(code).code}
         else:
-            for c in code:
-                self.codes = self.codes|{self.type(c).code}
-    def reset(self, code):
+            if check:
+                for c in code:
+                    self.codes = self.codes|{self.type(c).code}
+            else:
+                self.codes = self.codes|code
+    def reset(self, code, check=False):
         self.codes = set()
-        self.add(code)
+        self.add(code, check)
     def get_name(self, n=3):
         factor_count = {}   # 因子出现频率
         for i in self.codes:
