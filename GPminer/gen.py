@@ -9,12 +9,14 @@ import time
 
 class Gen():
     # 种群，因子库
-    def __init__(self, basket=[], popu0=None):
+    def __init__(self, basket=[], popu0=None, market=None):
         self.basket = basket
         if popu0==None:
             self.popu = popu.Population()
         else:
             self.popu = popu0
+        # 初始化pool的参数域，需要输入market
+        
     # 增强或减小某因子权重
     def mutation_score_dw(self):
         score0 = self.popu.type(list(self.popu.subset().codes)[0])
@@ -82,14 +84,6 @@ class Gen():
         score_new = ind.Score(exp)
         self.popu.add(score_new.code)
         return {score_new.code}
-        ## 增加或减少权重，避免因子权重减为0
-        #if (np.random.rand()>0.5)|(exp[random_select][2]==1):
-        #    exp[random_select][2] = exp[random_select][2]+1
-        #else:
-        #    exp[random_select][2] = exp[random_select][2]-1
-        #score_new = ind.Score(exp)
-        #self.popu.add(score_new.code)
-        #return {score_new.code}
     # 增减因子,增加因子时随机给一个已存在因子的权重
     def mutation_score_and(self):
         score0 = self.popu.type(list(self.popu.subset().codes)[0])
@@ -176,3 +170,7 @@ class Gen():
                     break
                 #print(func)
                 getattr(self, func)()
+
+
+
+
