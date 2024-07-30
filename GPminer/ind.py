@@ -116,7 +116,7 @@ class Pool():
             exp.append(one)
         self.exp = exp
     def exp2code(self):
-        return '|'.join([i[1]+(lambda x:'<' if x=='less' else '>' if x=='greater' \
+        self.code = '|'.join([i[1]+(lambda x:'<' if x=='less' else '>' if x=='greater' \
                                else '=' if x=='equal' else 'unknown')\
                                 (i[0])+str(i[2]) for i in self.exp])
     def uexp(self):
@@ -155,3 +155,5 @@ class Pool():
                     continue
             return unique_exp
         self.exp = unique_c(exp)
+    def factors(self):
+        return set([i[1] for i in self.exp])
