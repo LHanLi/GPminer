@@ -97,12 +97,18 @@ class Pool():
             if '<' in i:
                 opt = 'less'
                 s = i.split('<')
-                value = float(s[1])
+                try:
+                    value = float(s[1])
+                except:
+                    value = s[1]
                 factor = s[0]
             elif '>' in i:
                 opt='greater'
                 s = i.split('>')
-                value = float(s[1])
+                try:
+                    value = float(s[1])
+                except:
+                    value = s[1]
                 factor = s[0]
             elif '=' in i:
                 opt='equal'
