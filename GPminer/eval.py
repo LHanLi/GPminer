@@ -10,10 +10,10 @@ class Eval():
     hold_num = 5 # 持有hold_num只
     comm = 10/1e4 # 滑点与佣金
     price = 'close' # 结算价格
-    def __init__(self, market, pool0=None, score0=None):
+    def __init__(self, market, pool=None, score=None):
         self.market = market
-        self.pool = pool0
-        self.score = score0
+        self.pool = pool
+        self.score = score
         if self.pool!=None:
             # 默认全包含
             if self.pool.exp[0]!=[]:
