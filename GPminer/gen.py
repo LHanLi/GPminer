@@ -258,5 +258,3 @@ class Gen():
                 getattr(self, func)()
 
 
-
-
