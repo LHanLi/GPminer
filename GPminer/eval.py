@@ -25,9 +25,10 @@ class Eval():
                     r=(market[c[1]]==c[2])
                 result.append(r)
             self.market[self.pool.inexclude] = pd.concat(result, axis=1).any(axis=1)
-    def eval_score(self, p):
+    def eval_score(self, score0=None):
         #time0 = time.time()
-        self.score = ind.Score(p)
+        if score0!=None:
+            self.score = ind.Score(score0)
         # 获取筛选/排除后factor排序
         def process_factor(factor_name):
             if self.score.rankall:
@@ -48,6 +49,7 @@ class Eval():
         self.market['score'] = self.market[basescore].sum(axis=1)
         #print('获取打分耗时', time.time()-time0)
         #time0 = time.time()
+    def backtest(self):
         # 回测
         strat0 = FB.strat.MetaStrat(self.market, self.pool.inexclude, 'score',\
                                      self.hold_num, self.price)
@@ -59,3 +61,5 @@ class Eval():
         #print('后处理耗时', time.time()-time0)
         #time0 = time.time()
         return self.post
+
+
