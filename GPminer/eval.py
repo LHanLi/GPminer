@@ -15,16 +15,35 @@ class Eval():
         self.pool = pool0
         self.score = score0
         if self.pool!=None:
-            result = []
-            for c in self.pool.exp:
-                if c[0]=='less':
-                    r=(market[c[1]]<c[2])
-                elif c[0]=='greater':
-                    r=(market[c[1]]>c[2])
-                elif c[0]=='equal':
-                    r=(market[c[1]]==c[2])
-                result.append(r)
-            self.market[self.pool.inexclude] = pd.concat(result, axis=1).any(axis=1)
+            # 默认全包含
+            if self.pool.exp[0]!=[]:
+                result = []
+                for c in self.pool.exp[0]:
+                    if c[0]=='less':
+                        r=(market[c[1]]<c[2])
+                    elif c[0]=='greater':
+                        r=(market[c[1]]>c[2])
+                    elif c[0]=='equal':
+                        r=(market[c[1]]==c[2])
+                    result.append(r)
+                include = pd.concat(result, axis=1).any(axis=1)
+            else:
+                include = pd.Series(True, index=self.market.index)
+            # 默认不排除
+            if self.pool.exp[1]!=[]:
+                result = []
+                for c in self.pool.exp[1]:
+                    if c[0]=='less':
+                        r=(market[c[1]]<c[2])
+                    elif c[0]=='greater':
+                        r=(market[c[1]]>c[2])
+                    elif c[0]=='equal':
+                        r=(market[c[1]]==c[2])
+                    result.append(r)
+                exclude = pd.concat(result, axis=1).any(axis=1)
+            else:
+                exclude = pd.Series(False, index=self.market.index)
+            self.market['include'] = include&(~exclude) 
     def eval_score(self, score0=None):
         #time0 = time.time()
         if score0!=None:
@@ -34,12 +53,8 @@ class Eval():
             if self.score.rankall:
                 return self.market[factor_name]
             else:
-                if self.pool.inexclude=='exclude':
-                    # 排除掉的置为np.nan
-                    return self.market[factor_name]*(self.market[self.pool.inexclude].astype(int).\
-                                                replace(to_replace={1:np.nan, 0:1}))
-                else:
-                    return self.market[factor_name]*(self.market[self.pool.inexclude].astype(int).\
+                # 排除掉的置为np.nan
+                return self.market[factor_name]*(self.market['include'].astype(int).\
                                                 replace(to_replace={0:np.nan}))
         # 获取打分
         for factor in self.score.exp:
