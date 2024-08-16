@@ -16,7 +16,7 @@ class Gen():
         else:
             self.popu = popu0
         # 初始化pool的参数域，需要输入market
-        if popu.type==ind.Pool:
+        if self.popu.type==ind.Pool:
             self.para_space = {}
             for factor in basket:
                 try:
