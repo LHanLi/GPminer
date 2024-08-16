@@ -16,13 +16,14 @@ class Gen():
         else:
             self.popu = popu0
         # 初始化pool的参数域，需要输入market
-        self.para_space = {}
-        for factor in basket:
-            try:
-                self.para_space[factor] = (False, [market[factor].quantile(i) \
-                                                   for i in np.linspace(0.01,0.99,21)])
-            except:
-                self.para_space[factor] = (True,list(market[factor].unique())) 
+        if popu.type==ind.Pool:
+            self.para_space = {}
+            for factor in basket:
+                try:
+                    self.para_space[factor] = (False, [market[factor].quantile(i) \
+                                                       for i in np.linspace(0.01,0.99,21)])
+                except:
+                    self.para_space[factor] = (True,list(market[factor].unique())) 
     # 增强或减小某因子参数
     def mutation_score_d(self):
         score0 = self.popu.type(list(self.popu.subset().codes)[0])
