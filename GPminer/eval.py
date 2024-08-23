@@ -66,7 +66,7 @@ class Eval():
         #time0 = time.time()
     def backtest(self):
         # 回测
-        strat0 = FB.strat.MetaStrat(self.market, self.pool.inexclude, 'score',\
+        strat0 = FB.strat.MetaStrat(self.market, 'include', 'score',\
                                      self.hold_num, self.price)
         strat0.run()
         #print('策略回测耗时', time.time()-time0)
