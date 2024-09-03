@@ -64,17 +64,18 @@ class Eval():
         self.market['score'] = self.market[basescore].sum(axis=1)
         #print('获取打分耗时', time.time()-time0)
         #time0 = time.time()
-    def backtest(self, hold_num, price, comm=10/1e4):
+    def backtest(self, hold_num, price):
         # 回测
         strat0 = FB.strat.MetaStrat(self.market, 'include', 'score',\
                                      hold_num, price)
         strat0.run()
-        #print('策略回测耗时', time.time()-time0)
-        #time0 = time.time()
-        # 后处理
-        self.post = FB.post.StratPost(strat0, self.market, comm=comm, fast=True)
-        #print('后处理耗时', time.time()-time0)
-        #time0 = time.time()
-        return self.post
+        return strat0
+        ##print('策略回测耗时', time.time()-time0)
+        ##time0 = time.time()
+        ## 后处理
+        #self.post = FB.post.StratPost(strat0, self.market, comm=comm, fast=True)
+        ##print('后处理耗时', time.time()-time0)
+        ##time0 = time.time()
+        #return self.post
 
 
