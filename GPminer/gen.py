@@ -34,7 +34,7 @@ class Gen():
             return {score0.code}
         random_select = np.random.randint(len(exp)) 
         #print('选择变异第%s个因子权重'%random_select)
-        deltawmax = 0.05 # 权重改变幅度小于此阈值
+        deltawmax = 0.1 # 权重改变幅度小于此阈值   # 声明常数 constant
         deltawmin = 0.02 # 权重改变幅度大于此阈值
         max_step = 100 # 最大的新权重组合寻找步数
         sumw = sum([i[2] for i in exp])
