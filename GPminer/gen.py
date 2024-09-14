@@ -40,7 +40,8 @@ class Gen():
         sumw = sum([i[2] for i in exp])
         wbefore = exp[random_select][2]/sumw
         mul = 1  # 全部权重乘mul，random_select权重+1, d>0增加权重，d<0减小权重 
-        # 减小/增大乘数(d为负时相反）， 是/否操作exp 
+        # 改变random_select的权重可以通过 1.改变该因子的乘数 或 2.改变其他因子的乘数实现
+        # 获取改变乘数后该因子权重
         def get_wafter(method=True, opt=False):
             if method:
                 if opt:
@@ -55,6 +56,7 @@ class Gen():
                     exp[random_select][2] = exp[random_select][2]+d
                 return (mul*exp[random_select][2]+d)/(mul*sumw+d)
         minw = min([i[2] for i in exp])
+        # 增大权重50%概率
         if np.random.rand()>0.5:
             d = 1
             # 如果最小数字*mul大于d则通过减小乘数增大权重，否则选择通过增大系数增大权重
