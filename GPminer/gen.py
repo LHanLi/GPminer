@@ -17,6 +17,7 @@ class Gen():
             self.popu = popu0
         # 初始化pool的参数域，需要输入market
         if self.popu.type==ind.Pool:
+            print('ind.Pool')
             self.para_space = {}
             for factor in basket:
                 try:
@@ -214,11 +215,11 @@ class Gen():
                 for b0 in [True, False]:
                     for b1 in [True, False]:
                         popu0.add(ind.Score([[i, b0, 1], [j, b1, 1]]).code)
-            for i,j,k in list(combinations(self.basket, 3)):
-                for b0 in [True, False]:
-                    for b1 in [True, False]:
-                        for b2 in [True, False]:
-                            popu0.add(ind.Score([[i, b0, 1], [j, b1, 1], [k, b2, 1]]).code)
+            #for i,j,k in list(combinations(self.basket, 3)):
+            #    for b0 in [True, False]:
+            #        for b1 in [True, False]:
+            #            for b2 in [True, False]:
+            #                popu0.add(ind.Score([[i, b0, 1], [j, b1, 1], [k, b2, 1]]).code)
         elif self.popu.type==(ind.Pool):
             popu0 = popu.Population(ind.Pool)
             # 单因子组合
