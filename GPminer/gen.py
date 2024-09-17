@@ -260,6 +260,7 @@ class Gen():
                 print('超过最大运行时间60s')
                 break
             r = np.random.rand()
+            print('算子选择随机数：', r)
             for func,v in prob_ser.items():
                 if r<v:
                     break
