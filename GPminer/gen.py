@@ -183,28 +183,28 @@ class Gen():
         new = self.popu.type(exp)
         self.popu.add(new.code)
         return {new.code}
-    # 两因子交叉
-    def cross_score_exchange(self):
-        if len(self.popu.codes)<2:
-            #GPm.ino.log('种群规模过小')
-            return {} 
-        sele = list(self.popu.subset(2).codes)
-        exp0 = self.popu.type(sele[0]).exp
-        exp1 = self.popu.type(sele[1]).exp
-        # 需要打乱顺序，保证交叉的多样性
-        shuffle(exp0)
-        shuffle(exp1)
-        # 如果有一个是单因子的话则合成一个因子
-        if (len(exp0)==1)|(len(exp1)==1):
-            new = self.popu.type(exp0+exp1)
-            self.popu.add(new.code)
-            return {new.code}
-        cut0 = np.random.randint(1,len(exp0))
-        cut1 = np.random.randint(1,len(exp1))
-        new_0 = self.popu.type(exp0[:cut0]+exp1[:cut1])
-        new_1 = self.popu.type(exp0[cut0:]+exp1[cut1:])
-        self.popu.add({new_0.code, new_1.code})
-        return {new_0.code, new_1.code} 
+    ## 两因子交叉
+    #def cross_score_exchange(self):
+    #    if len(self.popu.codes)<2:
+    #        #GPm.ino.log('种群规模过小')
+    #        return {} 
+    #    sele = list(self.popu.subset(2).codes)
+    #    exp0 = self.popu.type(sele[0]).exp
+    #    exp1 = self.popu.type(sele[1]).exp
+    #    # 需要打乱顺序，保证交叉的多样性
+    #    shuffle(exp0)
+    #    shuffle(exp1)
+    #    # 如果有一个是单因子的话则合成一个因子
+    #    if (len(exp0)==1)|(len(exp1)==1):
+    #        new = self.popu.type(exp0+exp1)
+    #        self.popu.add(new.code)
+    #        return {new.code}
+    #    cut0 = np.random.randint(1,len(exp0))
+    #    cut1 = np.random.randint(1,len(exp1))
+    #    new_0 = self.popu.type(exp0[:cut0]+exp1[:cut1])
+    #    new_1 = self.popu.type(exp0[cut0:]+exp1[cut1:])
+    #    self.popu.add({new_0.code, new_1.code})
+    #    return {new_0.code, new_1.code} 
     def get_seeds(self):
         if self.popu.type==(GPm.ind.Score):
             popu0 = GPm.popu.Population() 
@@ -237,9 +237,9 @@ class Gen():
         # 各算子被执行的概率，如果空则全部算子等概率执形
         if prob_dict=={}:
             if self.popu.type==GPm.ind.Score:
-                opts = [f for f in dir(Gen) if ('mutation' in f) and ('score' in f)]
+                opts = [f for f in dir(Gen) if  ('score' in f)]
             elif self.popu.type==GPm.ind.Pool:
-                opts = [f for f in dir(Gen) if ('mutation' in f) and ('pool' in f)]
+                opts = [f for f in dir(Gen) if  ('pool' in f)]
             #opts_cross = [f for f in dir(Gen) if  'cross' in f]
             prob_ser = pd.Series(np.ones(len(opts)), index=opts)
         else:
