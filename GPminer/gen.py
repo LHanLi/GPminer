@@ -256,12 +256,8 @@ class Gen():
                 break
             r = np.random.rand()
             GPm.ino.log('算子选择随机数：', r)
-            for func,v in prob_ser.items():
-                if r>v:
-                    getattr(self, func)()
-                    GPm.ino.log('执行%s'%func)
-                    break
-                else:
-                    continue
+            func = prob_ser[prob_ser>r].index[0] 
+            getattr(self, func)()
+            GPm.ino.log('执行%s'%func)
 
 
