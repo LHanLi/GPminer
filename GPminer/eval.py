@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import FreeBack as FB
-from GPminer import * 
+import GPminer as GPm 
 import time
 
 # 计算个体适应度类
@@ -47,7 +47,7 @@ class Eval():
     def eval_score(self, score0=None):
         #time0 = time.time()
         if score0!=None:
-            self.score = ind.Score(score0)
+            self.score = GPm.ind.Score(score0)
         # 获取筛选/排除后factor排序
         def process_factor(factor_name):
             if self.score.rankall:
