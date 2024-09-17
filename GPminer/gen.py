@@ -252,13 +252,18 @@ class Gen():
             prob_ser = pd.Series(prob_dict.values(), index=prob_dict.keys())
         prob_ser = prob_ser/prob_ser.sum()
         prob_ser = prob_ser.cumsum()
+        # 种群繁殖到目标数量未知，同时限制最大时间
         popu_size = len(self.popu.codes)
+        time0 = time.time()
         while len(self.popu.codes)<int(popu_size*multi):
+            if time.time()-time0>60:
+                print('超过最大运行时间60s')
+                break
             r = np.random.rand()
             for func,v in prob_ser.items():
                 if r<v:
                     break
-                #print(func)
                 getattr(self, func)()
+                print('执行', func)
 
 
