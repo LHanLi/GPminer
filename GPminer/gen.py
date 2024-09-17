@@ -17,7 +17,7 @@ class Gen():
             self.popu = popu0
         # 初始化pool的参数域，需要输入market
         if self.popu.type==ind.Pool:
-            print('ind.Pool')
+            ino.log('ind.Pool')
             self.para_space = {}
             for factor in basket:
                 try:
@@ -34,7 +34,7 @@ class Gen():
             self.popu.add(score0.code)
             return {score0.code}
         random_select = np.random.randint(len(exp)) 
-        #print('选择变异第%s个因子权重'%random_select)
+        #ino.log('选择变异第%s个因子权重'%random_select)
         deltawmax = 0.1 # 权重改变幅度小于此阈值   # 声明常数 constant
         deltawmin = 0.02 # 权重改变幅度大于此阈值
         max_step = 100 # 最大的新权重组合寻找步数
@@ -71,7 +71,7 @@ class Gen():
                     # 权重变化太大增大mul
                     mul+=1
                 step += 1
-                # print(mul, d)
+                # ino.log(mul, d)
                 wafter = get_wafter(minw*mul>d, False)
             get_wafter(minw*mul>d, True)
         else:
@@ -89,7 +89,7 @@ class Gen():
                     step += 1
                 wafter = get_wafter(minw*mul<=-d, False)
             get_wafter(minw*mul<=-d, True)
-            #print('通过%s系数, 减小权重, mul=%s, d=%s'%\
+            #ino.log('通过%s系数, 减小权重, mul=%s, d=%s'%\
             #      ((lambda x: '减小' if x else '增大')(method), mul, d))
         score_new = ind.Score(exp)
         self.popu.add(score_new.code)
@@ -100,7 +100,7 @@ class Gen():
         # 等概率选择一个因子（只改变一个点位）进行改变
         random_factor = choice(list(set([i[1] for i in exp])))
         random_loc = choice([i for i in range(len(exp)) if exp[i][1]==random_factor])
-        print(random_factor, random_loc)
+        #ino.log(random_factor, random_loc)
         # 如果是离散变量随机去掉或者增加值
         if self.para_space[random_factor][0]:
             if np.random.rand()>0.5:
@@ -186,7 +186,7 @@ class Gen():
     # 两因子交叉
     def cross_exchange(self):
         if len(self.popu.codes)<2:
-            #print('种群规模过小')
+            #ino.log('种群规模过小')
             return {} 
         sele = list(self.popu.subset(2).codes)
         exp0 = self.popu.type(sele[0]).exp
@@ -257,14 +257,14 @@ class Gen():
         time0 = time.time()
         while len(self.popu.codes)<int(popu_size*multi):
             if time.time()-time0>60:
-                print('超过最大运行时间60s')
+                ino.log('超过最大运行时间60s')
                 break
             r = np.random.rand()
-            print('算子选择随机数：', r)
+            ino.log('算子选择随机数：', r)
             for func,v in prob_ser.items():
                 if r<v:
                     break
                 getattr(self, func)()
-                print('执行', func)
+                ino.log('执行', func)
 
 

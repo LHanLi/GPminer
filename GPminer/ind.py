@@ -150,7 +150,7 @@ class Pool(Ind):
                             unique_exp.append(c)
                     values.append(c[2])
                 else:
-                    #print('不同因子或算子直接跳过')
+                    #ino.log('不同因子或算子直接跳过')
                     unique_exp.append(c)
                     prefactor = factor
                     preopt = opt

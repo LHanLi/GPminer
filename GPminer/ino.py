@@ -1,4 +1,4 @@
-import dill,os,pickle
+import dill,os,pickle,datetime
 
 
 # 反序列化一个对象
@@ -21,3 +21,10 @@ def read_pkl(filename, fileloc, serial=False):
         if serial:
             obj = dill.loads(obj)
         return obj
+
+# log 函数
+def log(*txt):
+    f = open('log.txt','a+')
+    write_str = ('\n'+' '*35).join([str(i) for i in txt])
+    f.write('%s,        %s\n' % (datetime.datetime.now(), write_str))
+    f.close()
