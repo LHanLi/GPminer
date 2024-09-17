@@ -184,7 +184,7 @@ class Gen():
         self.popu.add(new.code)
         return {new.code}
     # 两因子交叉
-    def cross_exchange(self):
+    def cross_score_exchange(self):
         if len(self.popu.codes)<2:
             #GPm.ino.log('种群规模过小')
             return {} 
@@ -237,11 +237,10 @@ class Gen():
         # 各算子被执行的概率，如果空则全部算子等概率执形
         if prob_dict=={}:
             if self.popu.type==GPm.ind.Score:
-                opts_mutation = [f for f in dir(Gen) if ('mutation' in f) and ('score' in f)]
+                opts = [f for f in dir(Gen) if ('mutation' in f) and ('score' in f)]
             elif self.popu.type==GPm.ind.Pool:
-                opts_mutation = [f for f in dir(Gen) if ('mutation' in f) and ('pool' in f)]
-            opts_cross = [f for f in dir(Gen) if  'cross' in f]
-            opts = opts_cross+opts_mutation
+                opts = [f for f in dir(Gen) if ('mutation' in f) and ('pool' in f)]
+            #opts_cross = [f for f in dir(Gen) if  'cross' in f]
             prob_ser = pd.Series(np.ones(len(opts)), index=opts)
         else:
             prob_ser = pd.Series(prob_dict.values(), index=prob_dict.keys())
@@ -258,9 +257,11 @@ class Gen():
             r = np.random.rand()
             GPm.ino.log('算子选择随机数：', r)
             for func,v in prob_ser.items():
-                if r<v:
+                if r>v:
+                    getattr(self, func)()
+                    GPm.ino.log('执行%s'%func)
                     break
-                getattr(self, func)()
-                GPm.ino.log('执行', func)
+                else:
+                    continue
 
 
