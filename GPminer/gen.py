@@ -214,7 +214,7 @@ class Gen():
             for i,j in list(combinations(self.basket, 2)):
                 for b0 in [True, False]:
                     for b1 in [True, False]:
-                        popu0.add(ind.Score([[i, b0, 1], [j, b1, 1]]).code)
+                        popu0.add(GPm.ind.Score([[i, b0, 1], [j, b1, 1]]).code)
             #for i,j,k in list(combinations(self.basket, 3)):
             #    for b0 in [True, False]:
             #        for b1 in [True, False]:
