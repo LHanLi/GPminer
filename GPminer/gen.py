@@ -183,28 +183,28 @@ class Gen():
         new = self.popu.type(exp)
         self.popu.add(new.code)
         return {new.code}
-    ## 两因子交叉
-    #def cross_score_exchange(self):
-    #    if len(self.popu.codes)<2:
-    #        #GPm.ino.log('种群规模过小')
-    #        return {} 
-    #    sele = list(self.popu.subset(2).codes)
-    #    exp0 = self.popu.type(sele[0]).exp
-    #    exp1 = self.popu.type(sele[1]).exp
-    #    # 需要打乱顺序，保证交叉的多样性
-    #    shuffle(exp0)
-    #    shuffle(exp1)
-    #    # 如果有一个是单因子的话则合成一个因子
-    #    if (len(exp0)==1)|(len(exp1)==1):
-    #        new = self.popu.type(exp0+exp1)
-    #        self.popu.add(new.code)
-    #        return {new.code}
-    #    cut0 = np.random.randint(1,len(exp0))
-    #    cut1 = np.random.randint(1,len(exp1))
-    #    new_0 = self.popu.type(exp0[:cut0]+exp1[:cut1])
-    #    new_1 = self.popu.type(exp0[cut0:]+exp1[cut1:])
-    #    self.popu.add({new_0.code, new_1.code})
-    #    return {new_0.code, new_1.code} 
+    # 两因子交叉
+    def cross_score_exchange(self):
+        if len(self.popu.codes)<2:
+            #GPm.ino.log('种群规模过小')
+            return {} 
+        sele = list(self.popu.subset(2).codes)
+        exp0 = self.popu.type(sele[0]).exp
+        exp1 = self.popu.type(sele[1]).exp
+        # 需要打乱顺序，保证交叉的多样性
+        shuffle(exp0)
+        shuffle(exp1)
+        # 如果有一个是单因子的话则合成一个因子
+        if (len(exp0)==1)|(len(exp1)==1):
+            new = self.popu.type(exp0+exp1)
+            self.popu.add(new.code)
+            return {new.code}
+        cut0 = np.random.randint(1,len(exp0))
+        cut1 = np.random.randint(1,len(exp1))
+        new_0 = self.popu.type(exp0[:cut0]+exp1[:cut1])
+        new_1 = self.popu.type(exp0[cut0:]+exp1[cut1:])
+        self.popu.add({new_0.code, new_1.code})
+        return {new_0.code, new_1.code} 
     def get_seeds(self):
         if self.popu.type==(GPm.ind.Score):
             popu0 = GPm.popu.Population() 
@@ -220,8 +220,8 @@ class Gen():
             #        for b1 in [True, False]:
             #            for b2 in [True, False]:
             #                popu0.add(ind.Score([[i, b0, 1], [j, b1, 1], [k, b2, 1]]).code)
-        elif self.popu.type==(ind.Pool):
-            popu0 = popu.Population(ind.Pool)
+        elif self.popu.type==(GPm.ind.Pool):
+            popu0 = GPm.popu.Population(GPm.ind.Pool)
             # 单因子组合
             for factor in self.basket:
                 for threshold in self.para_space[factor][1]:
