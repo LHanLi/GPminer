@@ -20,8 +20,8 @@ class Ind():
 
 # 打分因子(code:'2*False*a+1*True*b, exp:[[2, False, 'a'], [1, True, 'b']])
 class Score(Ind):
-    max_exp_len = 5 # 最大因子数
-    max_mul = 10 # 最大因子系数          constant
+    max_exp_len = 10 # 最大因子数
+    max_mul = 50 # 最大因子系数          constant
     rankall = False # 池子外股票是否参与排序
     def code2exp(self):
         exp = []
