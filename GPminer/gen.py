@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 from random import shuffle,choice,sample
-from GPminer import * 
+import GPminer as GPm
 from itertools import combinations
 import time
 
@@ -12,11 +12,12 @@ class Gen():
     def __init__(self, basket=[], popu0=None, market=None):
         self.basket = basket
         if popu0==None:
-            self.popu = popu.Population()
+            self.popu = GPm.popu.Population()
         else:
             self.popu = popu0
         # 初始化pool的参数域，需要输入market
-        if self.popu.type==ind.Pool:
+        if self.popu.type==GPm.ind.Pool:
+            GPm.ino.log('ind.Pool')
             self.para_space = {}
             for factor in basket:
                 try:
@@ -33,7 +34,7 @@ class Gen():
             self.popu.add(score0.code)
             return {score0.code}
         random_select = np.random.randint(len(exp)) 
-        #print('选择变异第%s个因子权重'%random_select)
+        #GPm.ino.log('选择变异第%s个因子权重'%random_select)
         deltawmax = 0.1 # 权重改变幅度小于此阈值   # 声明常数 constant
         deltawmin = 0.02 # 权重改变幅度大于此阈值
         max_step = 100 # 最大的新权重组合寻找步数
@@ -70,7 +71,7 @@ class Gen():
                     # 权重变化太大增大mul
                     mul+=1
                 step += 1
-                # print(mul, d)
+                # GPm.ino.log(mul, d)
                 wafter = get_wafter(minw*mul>d, False)
             get_wafter(minw*mul>d, True)
         else:
@@ -88,9 +89,9 @@ class Gen():
                     step += 1
                 wafter = get_wafter(minw*mul<=-d, False)
             get_wafter(minw*mul<=-d, True)
-            #print('通过%s系数, 减小权重, mul=%s, d=%s'%\
+            #GPm.ino.log('通过%s系数, 减小权重, mul=%s, d=%s'%\
             #      ((lambda x: '减小' if x else '增大')(method), mul, d))
-        score_new = ind.Score(exp)
+        score_new = GPm.ind.Score(exp)
         self.popu.add(score_new.code)
         return {score_new.code}
     def mutation_pool_d(self):
@@ -99,7 +100,7 @@ class Gen():
         # 等概率选择一个因子（只改变一个点位）进行改变
         random_factor = choice(list(set([i[1] for i in exp])))
         random_loc = choice([i for i in range(len(exp)) if exp[i][1]==random_factor])
-        print(random_factor, random_loc)
+        #GPm.ino.log(random_factor, random_loc)
         # 如果是离散变量随机去掉或者增加值
         if self.para_space[random_factor][0]:
             if np.random.rand()>0.5:
@@ -132,7 +133,7 @@ class Gen():
             # 随机赋一个已有因子的权重
             exp.append([self.basket[random_select], np.random.rand()>0.5, \
                          exp[random_select0][2]])
-        score_new = ind.Score(exp)
+        score_new = GPm.ind.Score(exp)
         self.popu.add(score_new.code)
         return {score_new.code}
     def mutation_pool_and(self):
@@ -163,7 +164,7 @@ class Gen():
                         (self.basket[random_select] in already):
             random_select = np.random.randint(len(self.basket))
         exp[random_select0][0] = self.basket[random_select]
-        score_new = ind.Score(exp)
+        score_new = GPm.ind.Score(exp)
         self.popu.add(score_new.code)
         return {score_new.code}
     def mutation_pool_replace(self):
@@ -182,34 +183,34 @@ class Gen():
         new = self.popu.type(exp)
         self.popu.add(new.code)
         return {new.code}
-    # 两因子交叉
-    def cross_exchange(self):
-        if len(self.popu.codes)<2:
-            #print('种群规模过小')
-            return {} 
-        sele = list(self.popu.subset(2).codes)
-        exp0 = self.popu.type(sele[0]).exp
-        exp1 = self.popu.type(sele[1]).exp
-        # 需要打乱顺序，保证交叉的多样性
-        shuffle(exp0)
-        shuffle(exp1)
-        # 如果有一个是单因子的话则合成一个因子
-        if (len(exp0)==1)|(len(exp1)==1):
-            new = self.popu.type(exp0+exp1)
-            self.popu.add(new.code)
-            return {new.code}
-        cut0 = np.random.randint(1,len(exp0))
-        cut1 = np.random.randint(1,len(exp1))
-        new_0 = self.popu.type(exp0[:cut0]+exp1[:cut1])
-        new_1 = self.popu.type(exp0[cut0:]+exp1[cut1:])
-        self.popu.add({new_0.code, new_1.code})
-        return {new_0.code, new_1.code} 
+    ## 两因子交叉
+    #def cross_score_exchange(self):
+    #    if len(self.popu.codes)<2:
+    #        #GPm.ino.log('种群规模过小')
+    #        return {} 
+    #    sele = list(self.popu.subset(2).codes)
+    #    exp0 = self.popu.type(sele[0]).exp
+    #    exp1 = self.popu.type(sele[1]).exp
+    #    # 需要打乱顺序，保证交叉的多样性
+    #    shuffle(exp0)
+    #    shuffle(exp1)
+    #    # 如果有一个是单因子的话则合成一个因子
+    #    if (len(exp0)==1)|(len(exp1)==1):
+    #        new = self.popu.type(exp0+exp1)
+    #        self.popu.add(new.code)
+    #        return {new.code}
+    #    cut0 = np.random.randint(1,len(exp0))
+    #    cut1 = np.random.randint(1,len(exp1))
+    #    new_0 = self.popu.type(exp0[:cut0]+exp1[:cut1])
+    #    new_1 = self.popu.type(exp0[cut0:]+exp1[cut1:])
+    #    self.popu.add({new_0.code, new_1.code})
+    #    return {new_0.code, new_1.code} 
     def get_seeds(self):
-        if self.popu.type==(ind.Score):
-            popu0 = popu.Population() 
+        if self.popu.type==(GPm.ind.Score):
+            popu0 = GPm.popu.Population() 
             # 遍历单因子、双因子、三因子, 作为种子组合
             for i in self.basket:
-                popu0.add({ind.Score([[i, True, 1]]).code, ind.Score([[i, False, 1]]).code})
+                popu0.add({GPm.ind.Score([[i, True, 1]]).code, GPm.ind.Score([[i, False, 1]]).code})
             for i,j in list(combinations(self.basket, 2)):
                 for b0 in [True, False]:
                     for b1 in [True, False]:
@@ -225,39 +226,43 @@ class Gen():
             for factor in self.basket:
                 for threshold in self.para_space[factor][1]:
                     if self.para_space[factor][0]:
-                        pool0 = ind.Pool([['equal', factor, threshold]])
+                        pool0 = GPm.ind.Pool([['equal', factor, threshold]])
                         popu0.add(pool0.code)
                     else:
-                        pool0 = ind.Pool([['less', factor, threshold]])
+                        pool0 = GPm.ind.Pool([['less', factor, threshold]])
                         popu0.add(pool0.code)
-                        pool0 = ind.Pool([['greater', factor, threshold]])
+                        pool0 = GPm.ind.Pool([['greater', factor, threshold]])
                         popu0.add(pool0.code)
             # 两因子组合
-            popu0.add({ind.Pool(ind.Pool(i[0]).exp + ind.Pool(i[1]).exp).code\
+            popu0.add({GPm.ind.Pool(GPm.ind.Pool(i[0]).exp + GPm.ind.Pool(i[1]).exp).code\
                            for i in combinations(popu0.codes, 2)})
         return popu0.codes 
     # 种群繁殖
     def multiply(self, multi=2, prob_dict={}):
         # 各算子被执行的概率，如果空则全部算子等概率执形
         if prob_dict=={}:
-            if self.popu.type==ind.Score:
-                opts_mutation = [f for f in dir(Gen) if ('mutation' in f) and ('score' in f)]
-            elif self.popu.type==ind.Pool:
-                opts_mutation = [f for f in dir(Gen) if ('mutation' in f) and ('pool' in f)]
-            opts_cross = [f for f in dir(Gen) if  'cross' in f]
-            opts = opts_cross+opts_mutation
+            if self.popu.type==GPm.ind.Score:
+                opts = [f for f in dir(Gen) if  ('score' in f)]
+            elif self.popu.type==GPm.ind.Pool:
+                opts = [f for f in dir(Gen) if  ('pool' in f)]
+            #opts_cross = [f for f in dir(Gen) if  'cross' in f]
             prob_ser = pd.Series(np.ones(len(opts)), index=opts)
         else:
             prob_ser = pd.Series(prob_dict.values(), index=prob_dict.keys())
         prob_ser = prob_ser/prob_ser.sum()
         prob_ser = prob_ser.cumsum()
+        # 种群繁殖到目标数量未知，同时限制最大时间
         popu_size = len(self.popu.codes)
+            #for i,j,k in list(combinations(self.basket, 3)):
+        time0 = time.time()
         while len(self.popu.codes)<int(popu_size*multi):
+            if time.time()-time0>60:
+                GPm.ino.log('超过最大运行时间60s')
+                break
             r = np.random.rand()
-            for func,v in prob_ser.items():
-                if r<v:
-                    break
-                #print(func)
-                getattr(self, func)()
+            GPm.ino.log('算子选择随机数：', r)
+            func = prob_ser[prob_ser>r].index[0] 
+            getattr(self, func)()
+            GPm.ino.log('执行%s'%func)
 
 

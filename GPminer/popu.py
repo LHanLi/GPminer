@@ -1,6 +1,6 @@
 import pandas as pd
 from random import choice,sample
-from GPminer import * 
+import GPminer as GPm
 import re
 
 
@@ -8,7 +8,7 @@ import re
 
 class Population():
     # 个体类型
-    def __init__(self, type=ind.Score):
+    def __init__(self, type=GPm.ind.Score):
         self.type = type   # ind.Score, ind.Pool
         # 使用一个集合来储存code值
         self.codes = set()
@@ -39,7 +39,7 @@ class Population():
     def get_name(self, n=3):
         factor_count = {}   # 因子出现频率
         for i in self.codes:
-            if self.type==ind.Score:
+            if self.type==GPm.ind.Score:
                 for j in i.split('+'):
                     split = j.split('*')
                     name = '·'.join(split[1:])
@@ -47,7 +47,7 @@ class Population():
                         factor_count[name] = int(split[0])
                     else:
                         factor_count[name] = factor_count[name]+int(split[0])
-            elif self.type==ind.Pool:
+            elif self.type==GPm.ind.Pool:
                 for j in i.split('|'):
                     name = re.findall("^(.*?)[><=]", j)[0]
                     if name not in factor_count.keys():

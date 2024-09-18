@@ -21,7 +21,7 @@ class Ind():
 # 打分因子(code:'2*False*a+1*True*b, exp:[[2, False, 'a'], [1, True, 'b']])
 class Score(Ind):
     max_exp_len = 5 # 最大因子数
-    max_mul = 10 # 最大因子系数
+    max_mul = 10 # 最大因子系数          constant
     rankall = False # 池子外股票是否参与排序
     def code2exp(self):
         exp = []
@@ -76,96 +76,6 @@ class Score(Ind):
 # 使用;分割include和exclude条件
 # (code:'a<130|b=A;b=B'), 
 # exp:[[['less', 'a', 130], ['equal', 'b', 'A']], ['equal', 'b', 'B']])
-'''class Pool():
-    inexclude = 'exclude'
-    def __init__(self, input=None):
-        if type(input)==type(""):
-            self.code = input
-            self.code2exp()
-            self.uexp()
-            self.exp2code()
-        elif type(input)==type([]):
-            self.exp = input
-            self.uexp()
-            self.exp2code()
-        else:
-            self.exp = None
-            self.code = None
-    def code2exp(self):
-        exp = []
-        split = self.code.split('|')
-        for i in split:
-            # 组合中的单个条件
-            if '<' in i:
-                opt = 'less'
-                s = i.split('<')
-                try:
-                    value = float(s[1])
-                except:
-                    value = s[1]
-                factor = s[0]
-            elif '>' in i:
-                opt='greater'
-                s = i.split('>')
-                try:
-                    value = float(s[1])
-                except:
-                    value = s[1]
-                factor = s[0]
-            elif '=' in i:
-                opt='equal'
-                s = i.split('=')
-                try:
-                    value = float(s[1])
-                except:
-                    value = s[1]
-                factor = s[0]
-            one = [opt, factor, value] 
-            exp.append(one)
-        self.exp = exp
-    def exp2code(self):
-        self.code = '|'.join([i[1]+(lambda x:'<' if x=='less' else '>' if x=='greater' \
-                               else '=' if x=='equal' else 'unknown')\
-                                (i[0])+str(i[2]) for i in self.exp])
-    def uexp(self):
-        # 先按因子名称排序，再按逻辑符号，再按值
-        def takewsort(one):
-            return one[1:2]+one[:1]+one[2:]
-        exp = self.exp
-        exp.sort(key=takewsort, reverse=True)
-        # 大小于号重叠部分去除，等于重复去除
-        def unique_c(exp):
-            prefactor = ''
-            preopt = ''
-            unique_exp = []
-            for c in exp:
-                opt = c[0]
-                factor = c[1]
-                if (factor==prefactor)&(opt==preopt):
-                    if c[0]=='less':
-                        if c[2]>min(values):
-                            unique_exp.pop()
-                            unique_exp.append(c)
-                    elif c[0]=='equal':
-                        if c[2] not in values:
-                            unique_exp.append(c)
-                    elif c[0]=='greater':
-                        if c[2]<max(values):
-                            unique_exp.pop()
-                            unique_exp.append(c)
-                    values.append(c[2])
-                else:
-                    #print('不同因子或算子直接跳过')
-                    unique_exp.append(c)
-                    prefactor = factor
-                    preopt = opt
-                    values = [c[2]]
-                    continue
-            return unique_exp
-        self.exp = unique_c(exp)
-    def factors(self):
-        return set([i[1] for i in self.exp])
-    '''
 class Pool(Ind):
     def code2exp(self):
         innex = self.code.split(';')
@@ -240,7 +150,7 @@ class Pool(Ind):
                             unique_exp.append(c)
                     values.append(c[2])
                 else:
-                    #print('不同因子或算子直接跳过')
+                    #ino.log('不同因子或算子直接跳过')
                     unique_exp.append(c)
                     prefactor = factor
                     preopt = opt

@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import FreeBack as FB
-from GPminer import * 
+import GPminer as GPm 
 import time
 
 # 计算个体适应度类
@@ -47,7 +47,7 @@ class Eval():
     def eval_score(self, score0=None):
         #time0 = time.time()
         if score0!=None:
-            self.score = ind.Score(score0)
+            self.score = GPm.ind.Score(score0)
         # 获取筛选/排除后factor排序
         def process_factor(factor_name):
             if self.score.rankall:
@@ -62,7 +62,7 @@ class Eval():
                 rank(ascending=factor[1])*factor[2]
         basescore = [i[0]+'_score' for i in self.score.exp]
         self.market['score'] = self.market[basescore].sum(axis=1)
-        #print('获取打分耗时', time.time()-time0)
+        #ino.log('获取打分耗时', time.time()-time0)
         #time0 = time.time()
     def backtest(self, hold_num, price):
         # 回测
@@ -70,11 +70,11 @@ class Eval():
                                      hold_num, price)
         strat0.run()
         return strat0
-        ##print('策略回测耗时', time.time()-time0)
+        ##ino.log('策略回测耗时', time.time()-time0)
         ##time0 = time.time()
         ## 后处理
         #self.post = FB.post.StratPost(strat0, self.market, comm=comm, fast=True)
-        ##print('后处理耗时', time.time()-time0)
+        ##ino.log('后处理耗时', time.time()-time0)
         ##time0 = time.time()
         #return self.post
 
