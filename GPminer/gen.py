@@ -262,13 +262,12 @@ class Gen():
             getattr(self, func)()
         while len(self.popu.codes)<int(popu_size*multi):
             r = np.random.rand()
-            GPm.ino.log('算子选择随机数：%.3lf'%r)
+            #GPm.ino.log('算子选择随机数：%.3lf'%r)
             func = prob_ser[prob_ser>r].index[0] 
-            GPm.ino.log('选择%s算子'%func)
             try:
-                run_mul()
-                GPm.ino.log('执行完毕')
+                run_mul(func)
+                #GPm.ino.log('执行完毕')
             except:
-                GPm.ino.log('超过最大运行时间5s')
+                GPm.ino.log('%s超过最大运行时间5s'%func)
 
 
