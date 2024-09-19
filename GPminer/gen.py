@@ -262,7 +262,8 @@ class Gen():
             r = np.random.rand()
             GPm.ino.log('算子选择随机数：%.3lf'%r)
             func = prob_ser[prob_ser>r].index[0] 
+            GPm.ino.log('选择%s算子'%func)
             getattr(self, func)()
-            GPm.ino.log('执行%s'%func)
+            GPm.ino.log('执行完毕')
 
 
