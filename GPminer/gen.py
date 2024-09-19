@@ -254,16 +254,19 @@ class Gen():
         # 种群繁殖到目标数量未知，同时限制最大时间
         popu_size = len(self.popu.codes)
             #for i,j,k in list(combinations(self.basket, 3)):
-        time0 = time.time()
+        import timeout_decorator
+        @timeout_decorator.timeout(5)
+        def run_mul(func):
+            getattr(self, func)()
         while len(self.popu.codes)<int(popu_size*multi):
-            if time.time()-time0>60:
-                GPm.ino.log('超过最大运行时间60s')
-                break
             r = np.random.rand()
             GPm.ino.log('算子选择随机数：%.3lf'%r)
             func = prob_ser[prob_ser>r].index[0] 
             GPm.ino.log('选择%s算子'%func)
-            getattr(self, func)()
-            GPm.ino.log('执行完毕')
+            try:
+                run_mul()
+                GPm.ino.log('执行完毕')
+            except timeout_decorator.TimeoutError:
+                GPm.ino.log('超过最大运行时间5s')
 
 
