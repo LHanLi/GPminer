@@ -215,11 +215,6 @@ class Gen():
                 for b0 in [True, False]:
                     for b1 in [True, False]:
                         popu0.add(GPm.ind.Score([[i, b0, 1], [j, b1, 1]]).code)
-            #for i,j,k in list(combinations(self.basket, 3)):
-            #    for b0 in [True, False]:
-            #        for b1 in [True, False]:
-            #            for b2 in [True, False]:
-            #                popu0.add(ind.Score([[i, b0, 1], [j, b1, 1], [k, b2, 1]]).code)
         elif self.popu.type==(GPm.ind.Pool):
             popu0 = GPm.popu.Population(GPm.ind.Pool)
             # 单因子组合
@@ -263,11 +258,11 @@ class Gen():
         while len(self.popu.codes)<int(popu_size*multi):
             r = np.random.rand()
             #GPm.ino.log('算子选择随机数：%.3lf'%r)
-            func = prob_ser[prob_ser>r].index[0] 
+            func = prob_ser[prob_ser>r].index[0]
             try:
                 run_mul(func)
                 #GPm.ino.log('执行完毕')
             except:
-                GPm.ino.log('%s超过最大运行时间5s'%func)
+                GPm.ino.log('warning!!! %s超过最大运行时间5s'%func)
 
 
