@@ -251,11 +251,13 @@ class Gen():
             prob_ser = pd.Series(prob_dict.values(), index=prob_dict.keys())
         prob_ser = prob_ser/prob_ser.sum()
         prob_ser = prob_ser.cumsum()
-        # 种群繁殖到目标数量未知，同时限制最大时间
+        # 种群繁殖到目标数量，同时限制单次变异最大时间
         popu_size = len(self.popu.codes)
-            #for i,j,k in list(combinations(self.basket, 3)):
-        import timeout_decorator
-        @timeout_decorator.timeout(5)
+        # ↓只能在Linux系统使用
+        #import timeout_decorator
+        #@timeout_decorator.timeout(5)
+        from func_timeout import func_set_timeout
+        @func_set_timeout(5)
         def run_mul(func):
             getattr(self, func)()
         while len(self.popu.codes)<int(popu_size*multi):
@@ -266,7 +268,7 @@ class Gen():
             try:
                 run_mul()
                 GPm.ino.log('执行完毕')
-            except timeout_decorator.TimeoutError:
+            except:
                 GPm.ino.log('超过最大运行时间5s')
 
 
