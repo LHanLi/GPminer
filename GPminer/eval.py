@@ -7,9 +7,6 @@ import time
 # 计算个体适应度类
 
 class Eval():
-    #hold_num = 5 # 持有hold_num只
-    comm = 10/1e4 # 滑点与佣金
-    #price = 'close' # 结算价格
     def __init__(self, market, pool=None, score=None):
         self.market = market
         self.pool = pool
@@ -70,12 +67,5 @@ class Eval():
                                      hold_num, price)
         strat0.run()
         return strat0
-        ##ino.log('策略回测耗时', time.time()-time0)
-        ##time0 = time.time()
-        ## 后处理
-        #self.post = FB.post.StratPost(strat0, self.market, comm=comm, fast=True)
-        ##ino.log('后处理耗时', time.time()-time0)
-        ##time0 = time.time()
-        #return self.post
 
 
