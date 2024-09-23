@@ -25,7 +25,10 @@ def read_pkl(filename, fileloc, serial=False):
 # log 函数
 def log(*txt):
     try:
-        f = open('log.txt','a+')
+        try:
+            f = open('log.txt','a+', encoding='gbk')
+        except:
+            f = open('log.txt','a+', encoding='utf-8')
         write_str = ('\n'+' '*35).join([str(i) for i in txt])
         f.write('%s,        %s\n' % \
             (datetime.datetime.now(), write_str))
