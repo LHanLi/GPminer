@@ -5,7 +5,7 @@ with open("README.md","r",encoding='utf-8') as fh:
     long_description = fh.read()
 
 setup(
-    name="GPstrat",
+    name="GPminer",
     # 版本号: 第几次模块增加，第几次函数增加，第几次函数功能修改
     # (每次高级别序号增加后,低级别序号归0)
     # alpha为调试版,beta为测试版,没有后缀为稳定版 
