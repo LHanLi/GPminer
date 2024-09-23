@@ -16,7 +16,7 @@ setup(
     long_description=long_description, 
     # 描述文件为md格式
     long_description_content_type="text/markdown",
-    url="https://github.com/LHanLi/GPstrat",
+    url="https://github.com/LHanLi/GPminer",
     packages=find_packages(),
     install_requires = [
         #'pandas',
