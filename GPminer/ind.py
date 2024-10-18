@@ -161,4 +161,6 @@ class Pool(Ind):
     def factors(self):
         return set([i[1] for i in self.exp])
     
-
+# 策略类，包含排除（策略池子）和打分因子
+class Strat(Ind):
+    pass

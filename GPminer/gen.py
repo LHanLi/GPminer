@@ -9,10 +9,14 @@ import time
 
 class Gen():
     # 种群，因子库
-    def __init__(self, basket=[], popu0=None, market=None):
+    #def __init__(self, basket=[], popu0=None, market=None):
+    def __init__(self, basket=[], popu0=None, market=None, poputype='Score'):
         self.basket = basket
         if popu0==None:
-            self.popu = GPm.popu.Population()
+            if poputype=='Score':
+                self.popu = GPm.popu.Population(GPm.ind.Score)
+            elif poputype=='Pool':
+                self.popu = GPm.popu.Population(GPm.ind.Pool)
         else:
             self.popu = popu0
         # 初始化pool的参数域，需要输入market
@@ -22,7 +26,7 @@ class Gen():
             for factor in basket:
                 try:
                     self.para_space[factor] = (False, [market[factor].quantile(i) \
-                                                       for i in np.linspace(0.01,0.99,21)])
+                                    for i in np.linspace(0.01,0.99,21)])   # 数值因子
                 except:
                     self.para_space[factor] = (True,list(market[factor].unique())) 
     # 增强或减小某因子参数
@@ -221,12 +225,12 @@ class Gen():
             for factor in self.basket:
                 for threshold in self.para_space[factor][1]:
                     if self.para_space[factor][0]:
-                        pool0 = GPm.ind.Pool([['equal', factor, threshold]])
+                        pool0 = GPm.ind.Pool([[], [['equal', factor, threshold]]])
                         popu0.add(pool0.code)
                     else:
-                        pool0 = GPm.ind.Pool([['less', factor, threshold]])
+                        pool0 = GPm.ind.Pool([[], [['less', factor, threshold]]])
                         popu0.add(pool0.code)
-                        pool0 = GPm.ind.Pool([['greater', factor, threshold]])
+                        pool0 = GPm.ind.Pool([[], [['greater', factor, threshold]]])
                         popu0.add(pool0.code)
             # 两因子组合
             popu0.add({GPm.ind.Pool(GPm.ind.Pool(i[0]).exp + GPm.ind.Pool(i[1]).exp).code\
