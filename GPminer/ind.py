@@ -2,7 +2,11 @@ import math
 from random import shuffle
 
 # 种群的个体单元
-# 可以通过code或exp生成，code和exp一一对应
+# 可以通过code或exp生成，code和exp一一对应，code用于hash，exp用于计算。
+# 需定义:
+# 从code获得exp的函数code2exp
+# 从exp获得code的函数exp2code
+# 保证唯一表达式的函数uexp
 class Ind():
     def __init__(self, input=None):
         if type(input)==type(""):
@@ -17,8 +21,16 @@ class Ind():
         else:
             self.exp = None
             self.code = None
+    def code2exp(self):
+        pass
+    def exp2code(self):
+        pass
+    def uexp(self):
+        pass
 
-# 打分因子(code:'2*False*a+1*True*b, exp:[[2, False, 'a'], [1, True, 'b']])
+# 打分因子, 
+# code:'2*False*a+1*True*b, exp:[[2, False, 'a'], [1, True, 'b']]
+# 2倍a因子越小越好+1倍b因子越大越好
 class Score(Ind):
     max_exp_len = 10 # 最大因子数
     max_mul = 50 # 最大因子系数          constant
@@ -73,9 +85,8 @@ class Score(Ind):
         return 1e5*ns+ws 
 
 # 排除/选取因子（确定策略池子）
-# 使用;分割include和exclude条件
-# (code:'a<130|b=A;b=B'), 
-# exp:[[['less', 'a', 130], ['equal', 'b', 'A']], ['equal', 'b', 'B']])
+# code：'a<130|b=A;b=B'  exp:[[['less', 'a', 130]], [['equal', 'b', 'A'], ['equal', 'b', 'B']]
+# ;前为include，后为exclude条件, 意为全部a<130的股票中排除掉b为A和B的股票。 
 class Pool(Ind):
     def code2exp(self):
         innex = self.code.split(';')
@@ -158,9 +169,27 @@ class Pool(Ind):
                     continue
             return unique_exp
         self.exp = [unique_c(self.exp[0]), unique_c(self.exp[1])]
+    
     def factors(self):
         return set([i[1] for i in self.exp])
     
-# 策略类，包含排除（策略池子）和打分因子
-class Strat(Ind):
-    pass
+# 策略类，包含Score和Pool
+# code: Score.code+'&'+Pool.code, exp: [Score.exp, Pool.exp]
+class SP(Ind):
+    def __init__(self, input=None):
+        self.score = self.pool = None
+        super().__init__(input)
+    def code2exp(self):
+        if self.score==self.pool==None:        
+            scorecode, poolcode = self.code.split('&')
+            self.score = Score(scorecode)
+            self.pool = Pool(poolcode)
+        self.exp = [self.score.exp, self.pool.exp]
+    def exp2code(self):
+        if self.score==self.pool==None:        
+            scoreexp, poolexp = self.exp
+            self.score = Score(scoreexp)
+            self.pool = Pool(poolexp)
+        self.code = self.score.code+'&'+self.pool.code
+
+
