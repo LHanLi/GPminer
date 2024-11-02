@@ -64,9 +64,5 @@ class Population():
         popu0 = Population(self.type)
         popu0.add(set(sample(list(self.codes), size)))
         return popu0
-    # 从群体中采样
-    def pop(self, size=1): 
-        if size==1:
-
 
 
