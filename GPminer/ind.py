@@ -3,10 +3,6 @@ from random import shuffle
 
 # 种群的个体单元
 # 可以通过code或exp生成，code和exp一一对应，code用于hash，exp用于计算。
-# 需定义:
-# 从code获得exp的函数code2exp
-# 从exp获得code的函数exp2code
-# 保证唯一表达式的函数uexp
 class Ind():
     def __init__(self, input=None):
         if type(input)==type(""):
@@ -21,10 +17,13 @@ class Ind():
         else:
             self.exp = None
             self.code = None
+    # 从code获得exp
     def code2exp(self):
         pass
+    # 从exp获得code
     def exp2code(self):
         pass
+    # 保证表达式唯一性
     def uexp(self):
         pass
 
@@ -76,6 +75,9 @@ class Score(Ind):
             return one[::-1]
         exp.sort(key=takewsort, reverse=True)
         self.exp = exp
+    # 获取其包含的全部因子
+    def factors(self):
+        return set([i[0] for i in self.exp])
     # 比较打分因子大小
     def compare(self, s0):
         # 先比较因子数量
@@ -169,9 +171,8 @@ class Pool(Ind):
                     continue
             return unique_exp
         self.exp = [unique_c(self.exp[0]), unique_c(self.exp[1])]
-    
     def factors(self):
-        return set([i[1] for i in self.exp])
+        return set([i[1] for i in self.exp[0]+self.exp[1]])
     
 # 策略类，包含Score和Pool
 # code: Score.code+'&'+Pool.code, exp: [Score.exp, Pool.exp]
@@ -191,5 +192,6 @@ class SP(Ind):
             self.score = Score(scoreexp)
             self.pool = Pool(poolexp)
         self.code = self.score.code+'&'+self.pool.code
-
+    def factors(self):
+        return self.score.factors()|self.pool.factors()
 
