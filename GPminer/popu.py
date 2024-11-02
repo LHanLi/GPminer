@@ -5,19 +5,20 @@ import re
 
 
 # 种群
-
 class Population():
-    # 个体类型
+    # 使用一个集合来储存code值
     def __init__(self, type=GPm.ind.Score):
-        self.type = type   # ind.Score, ind.Pool
-        # 使用一个集合来储存code值
+        self.type = type   
         self.codes = set()
     def code2exp(self, code):
         return self.type(code)
-    # 默认不检查重复
+    # 默认不检查code（背后代表的个体）是否重复
     def add(self, code, check=False):
         if type(code)!=type(set()):
-            self.codes = self.codes|{self.type(code).code}
+            if check:
+                self.codes = self.codes|{self.type(code).code}
+            else:
+                self.codes = self.codes|{code}
         else:
             if check:
                 for c in code:
@@ -63,3 +64,9 @@ class Population():
         popu0 = Population(self.type)
         popu0.add(set(sample(list(self.codes), size)))
         return popu0
+    # 从群体中采样
+    def pop(self, size=1): 
+        if size==1:
+
+
+
