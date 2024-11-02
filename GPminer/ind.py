@@ -87,8 +87,8 @@ class Score(Ind):
         return 1e5*ns+ws 
 
 # 排除/选取因子（确定策略池子）
-# code：'a<130|b=A;b=B'  exp:[[['less', 'a', 130]], [['equal', 'b', 'A'], ['equal', 'b', 'B']]
-# ;前为include，后为exclude条件, 意为全部a<130的股票中排除掉b为A和B的股票。 
+# code：'a<130|b=A,B|c>C'  exp:[[['less', 'a', 130]], [['equal', 'b', ['A', 'B']], ['great', 'c', 'C']]
+# ;前为include，后为exclude条件, 意为全部a<130的股票中排除掉b为A和B以及c大于C的股票。 
 class Pool(Ind):
     def code2exp(self):
         innex = self.code.split(';')
@@ -104,26 +104,22 @@ class Pool(Ind):
                 if '<' in i:
                     opt = 'less'
                     s = i.split('<')
-                    try:
-                        value = float(s[1])
-                    except:
-                        value = s[1]
+                    value = float(s[1])
                     factor = s[0]
                 elif '>' in i:
                     opt='greater'
                     s = i.split('>')
-                    try:
-                        value = float(s[1])
-                    except:
-                        value = s[1]
+                    value = float(s[1])
                     factor = s[0]
                 elif '=' in i:
                     opt='equal'
                     s = i.split('=')
-                    try:
-                        value = float(s[1])
-                    except:
-                        value = s[1]
+                    value = []
+                    for i in s[1].split(','):
+                        try:
+                            value.append(float(i))
+                        except:
+                            value.append(i)
                     factor = s[0]
                 one = [opt, factor, value]
                 exp.append(one)
@@ -149,26 +145,32 @@ class Pool(Ind):
             for c in exp:
                 opt = c[0]
                 factor = c[1]
+                value = c[2]
+                #print('因子和操作符都相同时需要考虑合并问题')
                 if (factor==prefactor)&(opt==preopt):
-                    if c[0]=='less':
-                        if c[2]>min(values):
+                    if c[0]=='equal':   # 新元素全部并入
+                        unique_exp.pop()
+                        unique_exp.append([c[0], c[1], sorted(list(values|set(value)))])
+                        values = values|set(value)
+                        continue
+                    elif opt=='less':
+                        # 如果集合扩大则更新
+                        if value>max(values):
                             unique_exp.pop()
-                            unique_exp.append(c)
-                    elif c[0]=='equal':
-                        if c[2] not in values:
                             unique_exp.append(c)
                     elif c[0]=='greater':
-                        if c[2]<max(values):
+                        if c[2]<min(values):
                             unique_exp.pop()
                             unique_exp.append(c)
-                    values.append(c[2])
+                    values.append(value)
                 else:
-                    #ino.log('不同因子或算子直接跳过')
                     unique_exp.append(c)
-                    prefactor = factor
                     preopt = opt
-                    values = [c[2]]
-                    continue
+                    prefactor = factor
+                    if opt=='equal':
+                        values = set(value)
+                    else:
+                        values = [value, ]
             return unique_exp
         self.exp = [unique_c(self.exp[0]), unique_c(self.exp[1])]
     def factors(self):
