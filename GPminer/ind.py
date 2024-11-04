@@ -121,6 +121,8 @@ class Pool(Ind):
                         except:
                             value.append(i)
                     factor = s[0]
+                else:
+                    opt = 'unknow'
                 one = [opt, factor, value]
                 exp.append(one)
             final_exp.append(exp)
@@ -128,9 +130,10 @@ class Pool(Ind):
     def exp2code(self):
         code = []
         for exp in self.exp:
-            code.append('|'.join([i[1]+(lambda x:'<' if x=='less' else '>' if x=='greater' \
-                               else '=' if x=='equal' else 'unknown')\
-                                (i[0])+str(i[2]) for i in exp]))
+            code.append('|'.join([i[1]+\
+                (lambda x:'<' if x=='less' else '>' if x=='greater' \
+                    else '=' if x=='equal' else 'unknown')(i[0]) +\
+                 str(i[2]) if type(i[2])!=list else ','.join([str(j) for j in i[2]]) for i in exp]))
         self.code = ';'.join(code)
     def uexp(self):
         def unique_c(exp):
@@ -164,13 +167,14 @@ class Pool(Ind):
                             unique_exp.append(c)
                     values.append(value)
                 else:
-                    unique_exp.append(c)
                     preopt = opt
                     prefactor = factor
                     if opt=='equal':
                         values = set(value)
+                        unique_exp.append([c[0], c[1], sorted(list(values))])
                     else:
                         values = [value, ]
+                        unique_exp.append(c)
             return unique_exp
         self.exp = [unique_c(self.exp[0]), unique_c(self.exp[1])]
     def factors(self):
