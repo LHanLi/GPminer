@@ -44,6 +44,7 @@ class Gen():
                     for b1 in [True, False]:
                         popu0.add(GPm.ind.Score([[i, b0, 1], [j, b1, 1]]).code)
             return popu0
+        # 仅生成排除因子
         def seeds_Pool():
             popu0 = GPm.popu.Population(GPm.ind.Pool)
             # 单因子组合
@@ -51,7 +52,7 @@ class Gen():
                 for threshold in self.para_space[factor][1]:
                     # 离散变量使用=
                     if self.para_space[factor][0]:
-                        pool0 = GPm.ind.Pool([[], [['equal', factor, threshold]]])
+                        pool0 = GPm.ind.Pool([[], [['equal', factor, [threshold, ]]]])
                         popu0.add(pool0.code)
                     else:
                         pool0 = GPm.ind.Pool([[], [['less', factor, threshold]]])
