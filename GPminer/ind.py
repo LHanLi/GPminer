@@ -1,4 +1,6 @@
 import math
+import numpy as np 
+import pandas as pd
 from random import shuffle
 
 # 种群的个体单元
@@ -77,7 +79,13 @@ class Score(Ind):
         self.exp = exp
     # 获取其包含的全部因子
     def factors(self):
-        return set([i[0] for i in self.exp])
+        count = {}
+        for i in self.exp:
+            try:
+                count[i[0]] += i[2]
+            except:
+                count[i[0]] = i[2]
+        return pd.Series(count).sort_values(ascending=False)
     # 比较打分因子大小
     def compare(self, s0):
         # 先比较因子数量
@@ -111,7 +119,7 @@ class Pool(Ind):
                     s = i.split('>')
                     value = float(s[1])
                     factor = s[0]
-                elif '=' in i:
+                else:
                     opt='equal'
                     s = i.split('=')
                     value = []
@@ -121,8 +129,6 @@ class Pool(Ind):
                         except:
                             value.append(i)
                     factor = s[0]
-                else:
-                    opt = 'unknow'
                 one = [opt, factor, value]
                 exp.append(one)
             final_exp.append(exp)
@@ -131,19 +137,19 @@ class Pool(Ind):
         code = []
         for exp in self.exp:
             code.append('|'.join([i[1]+\
-                (lambda x:'<' if x=='less' else '>' if x=='greater' \
-                    else '=' if x=='equal' else 'unknown')(i[0]) +\
-                 str(i[2]) if type(i[2])!=list else ','.join([str(j) for j in i[2]]) for i in exp]))
+                (lambda x:'<' if x=='less' else '>' if x=='greater' else '=')(i[0]) +\
+                 (str(i[2]) if type(i[2])!=list else ','.join([str(j) for j in i[2]])) for i in exp]))
         self.code = ';'.join(code)
     def uexp(self):
         def unique_c(exp):
             # 先按因子名称排序，再按逻辑符号，再按值
             def takewsort(one):
-                return one[1:2]+one[:1]+one[2:]
+                return [one[1], one[0], str(one[2])]
             exp.sort(key=takewsort, reverse=True)
             # 大小于号重叠部分去除，等于重复去除
             prefactor = ''
             preopt = ''
+            prevalue = 0
             unique_exp = []
             for c in exp:
                 opt = c[0]
@@ -151,9 +157,9 @@ class Pool(Ind):
                 value = c[2]
                 #print('因子和操作符都相同时需要考虑合并问题')
                 if (factor==prefactor)&(opt==preopt):
-                    if c[0]=='equal':   # 新元素全部并入
+                    if opt=='equal':   # 新元素全部并入
                         unique_exp.pop()
-                        unique_exp.append([c[0], c[1], sorted(list(values|set(value)))])
+                        unique_exp.append([opt, factor, sorted([str(i) for i in list(values|set(value))])])
                         values = values|set(value)
                         continue
                     elif opt=='less':
@@ -161,24 +167,41 @@ class Pool(Ind):
                         if value>max(values):
                             unique_exp.pop()
                             unique_exp.append(c)
-                    elif c[0]=='greater':
-                        if c[2]<min(values):
+                    elif opt=='greater':
+                        if value<min(values):
                             unique_exp.pop()
                             unique_exp.append(c)
                     values.append(value)
                 else:
+                    #print('因子相同，操作符不同时，可能表达式代表的是空集，如a<10|a>5则随机去掉一个条件)
+                    if (factor==prefactor)&(opt!=preopt)&(opt!='equal'):
+                        if (((opt=='less')&(value>=prevalue))|((opt=='greater')&(value<=prevalue))):
+                            if np.random.rand()<0.5:
+                                pass  # 去掉该条件
+                            else:
+                                unique_exp.pop()   # 去掉前一个条件
+                                unique_exp.append(c)
+                            continue
                     preopt = opt
                     prefactor = factor
+                    prevalue = value
                     if opt=='equal':
                         values = set(value)
-                        unique_exp.append([c[0], c[1], sorted(list(values))])
+                        unique_exp.append([opt, factor, sorted(list(values))])
                     else:
                         values = [value, ]
                         unique_exp.append(c)
             return unique_exp
         self.exp = [unique_c(self.exp[0]), unique_c(self.exp[1])]
     def factors(self):
-        return set([i[1] for i in self.exp[0]+self.exp[1]])
+        count = {}
+        for i in self.exp:
+            for j in i:
+                try:
+                    count[j[1]] += 1 
+                except:
+                    count[j[1]] = 1 
+        return pd.Series(count).sort_values(ascending=False)
     
 # 策略类，包含Score和Pool
 # code: Score.code+'&'+Pool.code, exp: [Score.exp, Pool.exp]
@@ -199,5 +222,5 @@ class SP(Ind):
             self.pool = Pool(poolexp)
         self.code = self.score.code+'&'+self.pool.code
     def factors(self):
-        return self.score.factors()|self.pool.factors()
+        return self.score.factors().add(self.pool.factors(), fill_value=0).sort_values(ascending=False)
 

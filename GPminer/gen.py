@@ -59,11 +59,12 @@ class Gen():
                         popu0.add(pool0.code)
                         pool0 = GPm.ind.Pool([[], [['greater', factor, threshold]]])
                         popu0.add(pool0.code)
-            popu0 = popu0.subset(int(0.1*len(popu0.codes)))
+            #popu0 = popu0.subset(int(0.1*len(popu0.codes)))
             # 两因子组合
-            combos = [GPm.ind.Pool(i[0] + '|' + i[1][1:]).code \
-                                  for i in combinations(popu0.codes, 2)]
-            popu0.add(set(sample(combos, int(0.1*len(combos)))))
+            #combos = [GPm.ind.Pool(i[0] + '|' + i[1][1:]).code \
+            #                     for i in combinations(popu0.codes, 2)]
+            #popu0.add(set(sample(combos, int(0.1*len(combos)))))
+            #popu0.add(set(combos))
             return popu0
         if self.popu.type==(GPm.ind.Score):
             return seeds_Score().codes
@@ -74,7 +75,7 @@ class Gen():
     # 增大或减小某因子参数
     def mutation_d(self, ind):
         if type(ind)==GPm.ind.Score:
-            exp = ind.exp
+            exp = ind.exp.copy()
             # 单因子权重无法改变
             if len(exp)==1:
                 return {ind.code}
@@ -137,42 +138,56 @@ class Gen():
                 get_wafter(minw*mul<=-d, True)
                 #GPm.ino.log('通过%s系数, 减小权重, mul=%s, d=%s'%\
                 #      ((lambda x: '减小' if x else '增大')(method), mul, d))
-            score_new = GPm.ind.Score(exp)
-            return {score_new.code}
+            new = GPm.ind.Score(exp)
+            return new
         elif type(ind)==GPm.ind.Pool:
-            exp = ind.exp
-            # 等概率选择一个因子（只改变一个点位）进行改变
-            random_factor = choice(list(set([i[1] for i in exp])))
-            random_loc = choice([i for i in range(len(exp)) if exp[i][1]==random_factor])
-            print(random_factor, random_loc)
-            # 如果是离散变量随机去掉或者增加值
-            if self.para_space[random_factor][0]:
-                if np.random.rand()>0.5:
-                    exp.append(['equal', random_factor, choice(self.para_space[random_factor][1])])
-                else:
-                    exp.pop(random_loc)
+            exp = ind.exp.copy()
+            # 等概率选择变异include或exclude部分（除非他们为空）
+            if (len(exp[0])!=0)&((np.random.rand()<0.5)|(len(exp[1])==0)):
+                select_inexlude = 0
+                select_loc = np.random.randint(len(exp[0]))
             else:
-                # 小于等于最小值或大于等于最大值则变异为次小和次大的
-                # 其他情况时50%几率变大，50%几率变小 
-                if exp[random_loc][2]<=self.para_space[random_factor][1][0]:
-                    exp[random_loc][2] = self.para_space[random_factor][1][1]
-                elif exp[random_loc][2]>=self.para_space[random_factor][1][-1]:
-                    exp[random_loc][2] = self.para_space[random_factor][1][-2]
-                elif np.random.rand()>0.5:
-                    exp[random_loc][2] = [i for i in self.para_space[random_factor][1] if i>exp[random_loc][2]][0]
+                select_inexlude = 1
+                select_loc = np.random.randint(len(exp[1]))
+            thisfactor_space = self.para_space[exp[select_inexlude][select_loc][1]]
+            # 对于离散型因子增加或减少value
+            if thisfactor_space[0]:
+                if len(exp[select_inexlude][select_loc][2])==1:
+                    exp[select_inexlude][select_loc][2].append(choice(thisfactor_space[1]))
                 else:
-                    exp[random_loc][2] = [i for i in self.para_space[random_factor][1] if i<exp[random_loc][2]][-1]
-            new = self.popu.type(exp)
-            return {new.code}
-    def mutation_score_d(self):
+                    if np.random.rand()<0.5:
+                        exp[select_inexlude][select_loc][2].append(choice(thisfactor_space[1]))
+                    else:
+                        exp[select_inexlude][select_loc][2].pop()
+            # 对于数值型因子改变value到临近值
+            else:
+                less_value = [i for i in thisfactor_space[1] if i<exp[select_inexlude][select_loc][2]]
+                larger_value = [i for i in thisfactor_space[1] if i>exp[select_inexlude][select_loc][2]]
+                if (less_value == []) & (larger_value == []):
+                    print('没有可变异的值')
+                elif less_value==[]:
+                    exp[select_inexlude][select_loc][2] = larger_value[0]
+                elif larger_value==[]:
+                    exp[select_inexlude][select_loc][2] = less_value[-1]
+                else:
+                    if np.random.rand()<0.5:
+                        exp[select_inexlude][select_loc][2] = larger_value[0]
+                    else:
+                        exp[select_inexlude][select_loc][2] = less_value[-1]
+            new = GPm.ind.Pool(exp)
+            return new
+        elif type(ind)==GPm.ind.SP:
+            # 随机选打分因子/排除因子变异
+            if np.random.rand()<0.5:
+                ind.score = self.mutation_d(ind.score)
+            else:
+                ind.pool = self.mutation_d(ind.pool)
+            return GPm.ind.SP(ind.score.code+'&'+ind.pool.code) 
+    def popu_mutation_d(self):
         # 随机取出一个个体，变异得到新个体，添加得到个体。
-        score0 = self.popu.type(self.popu.subset().codes.pop())
-        score_new = self.mutation_d(score0)
-        self.popu.add(score_new.code)
-    def mutation_pool_d(self):
-        pool0 = self.popu.type(self.popu.subset().codes.pop())
-        pool_new = self.mutation_d(pool0)
-        self.popu.add(pool_new.code) 
+        ind = self.popu.type(self.popu.subset().codes.pop())
+        ind = self.mutation_d(ind)
+        self.popu.add(ind.code)
     # 增减因子,增加因子时随机给一个已存在因子的权重
     def mutation_score_and(self):
         score0 = self.popu.type(list(self.popu.subset().codes)[0])

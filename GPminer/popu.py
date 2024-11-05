@@ -38,26 +38,10 @@ class Population():
         self.codes = set()
         self.add(code, check)
     def get_name(self, n=3):
-        factor_count = {}   # 因子出现频率
+        factor_count = pd.Series()  # 因子出现频率
         for i in self.codes:
-            if self.type==GPm.ind.Score:
-                for j in i.split('+'):
-                    split = j.split('*')
-                    name = '·'.join(split[1:])
-                    if name not in factor_count.keys():
-                        factor_count[name] = int(split[0])
-                    else:
-                        factor_count[name] = factor_count[name]+int(split[0])
-            elif self.type==GPm.ind.Pool:
-                for j in i.split('|'):
-                    name = re.findall("^(.*?)[><=]", j)[0]
-                    if name not in factor_count.keys():
-                        factor_count[name] = 1 
-                    else:
-                        factor_count[name] = factor_count[name]+1
-        factor_count = pd.Series(factor_count.values(), index=factor_count.keys())\
-                .sort_values(ascending=False)
-        self.name = ';'.join(factor_count.index[:n])
+            factor_count = factor_count.add(self.type(i).factors(), fill_value=0)
+        self.name = ';'.join(factor_count.sort_values(ascending=False).index[:n]) 
         return self.name
     # 从群体中采样
     def subset(self, size=1):
