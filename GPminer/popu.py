@@ -45,6 +45,8 @@ class Population():
         return self.name
     # 从群体中采样
     def subset(self, size=1):
+        if size==1:
+            return self.type(sample(self.codes, 1)[0])
         popu0 = Population(self.type)
         popu0.add(set(sample(list(self.codes), size)))
         return popu0

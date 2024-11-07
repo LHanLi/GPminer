@@ -186,7 +186,10 @@ class Pool(Ind):
                     prefactor = factor
                     prevalue = value
                     if opt=='equal':
-                        values = set(value)
+                        if type(value)==list:
+                            values = set(value)
+                        else:
+                            values = set([value])
                         unique_exp.append([opt, factor, sorted(list(values))])
                     else:
                         values = [value, ]
