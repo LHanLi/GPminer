@@ -9,8 +9,16 @@ import time, copy
 
 class Gen():
     # 因子库，种群，市场，种群的类型
-    def __init__(self, basket=[], popu0=None, market=None, indtype='Score'):
-        self.basket = basket
+    def __init__(self, basket=[], score_basket=[], pool_basket=[],\
+                  popu0=None, market=None, indtype='Score'):
+        if (score_basket==[])&(pool_basket==[]):
+            self.score_basket = self.pool_basket = self.basket = basket
+        elif score_basket==[]:
+            self.basket 
+        elif pool_basket==[]:
+        else:
+            self.score_basket = score_basket 
+            self.poool_basket = pool_basket 
         if popu0==None:
             if indtype=='Score':
                 self.popu = GPm.popu.Population(GPm.ind.Score)
@@ -249,67 +257,82 @@ class Gen():
         ind = self.mutation_and(ind)
         self.popu.add(ind.code)
     # 替换因子
-    def mutation_score_replace(self):
-        score0 = self.popu.type(list(self.popu.subset().codes)[0])
-        exp = score0.exp
-        random_select0 = np.random.randint(len(exp))
-        random_select = np.random.randint(len(self.basket))
-        already = [i[0] for i in exp]
-        # 不能替换前后相同，不能替换已有因子
-        while (exp[random_select0][0]==self.basket[random_select])|\
-                        (self.basket[random_select] in already):
+    def mutation_replace(self, ind):
+        exp = copy.deepcopy(ind.exp)
+        if type(ind)==GPm.ind.Score:
+            random_select0 = np.random.randint(len(exp))
             random_select = np.random.randint(len(self.basket))
-        exp[random_select0][0] = self.basket[random_select]
-        score_new = GPm.ind.Score(exp)
-        self.popu.add(score_new.code)
-        return {score_new.code}
-    def mutation_pool_replace(self):
-        pool0 = self.popu.type(list(self.popu.subset().codes)[0])
-        exp = pool0.exp
-        random_pop = np.random.randint(len(exp))
-        # 删一个加一个
-        if (len(exp)!=1):
-            exp.pop(random_pop)
-            random_factor = choice(self.basket)
-            # 随机赋一个已有因子的权重
-            exp.append(['equal' if self.para_space[random_factor][0] else\
-                         'less' if np.random.rand()>0.5 else 'greater',\
-                         random_factor, \
-                         choice(self.para_space[random_factor][1])]) 
-        new = self.popu.type(exp)
-        self.popu.add(new.code)
-        return {new.code}
-    # 两因子交叉
-    def cross_score_exchange(self):
-        if len(self.popu.codes)<2:
-            #GPm.ino.log('种群规模过小')
-            return {} 
-        sele = list(self.popu.subset(2).codes)
-        exp0 = self.popu.type(sele[0]).exp
-        exp1 = self.popu.type(sele[1]).exp
-        # 需要打乱顺序，保证交叉的多样性
-        shuffle(exp0)
-        shuffle(exp1)
-        # 如果有一个是单因子的话则合成一个因子
-        if (len(exp0)==1)|(len(exp1)==1):
-            new = self.popu.type(exp0+exp1)
-            self.popu.add(new.code)
-            return {new.code}
-        cut0 = np.random.randint(1,len(exp0))
-        cut1 = np.random.randint(1,len(exp1))
-        new_0 = self.popu.type(exp0[:cut0]+exp1[:cut1])
-        new_1 = self.popu.type(exp0[cut0:]+exp1[cut1:])
-        self.popu.add({new_0.code, new_1.code})
-        return {new_0.code, new_1.code} 
+            already = [i[0] for i in exp]
+            # 不能替换前后相同，不能替换已有因子
+            while (exp[random_select0][0]==self.basket[random_select])|\
+                            (self.basket[random_select] in already):
+                random_select = np.random.randint(len(self.basket))
+            exp[random_select0][0] = self.basket[random_select]
+            return GPm.ind.Score(exp)
+        elif type(ind)==GPm.ind.Pool:
+            # 删一个加一个
+            def expreplace(exp):
+                exp.pop()
+                random_factor = choice(self.basket)
+                # 随机赋一个已有因子的权重
+                exp.append(['equal' if self.para_space[random_factor][0] else\
+                                 'less' if np.random.rand()>0.5 else 'greater',\
+                                 random_factor, \
+                                 [choice(self.para_space[random_factor][1])]]) 
+                return exp
+            if exp[0]==[]:
+                exp = [[], expreplace(exp[1])]
+            elif exp[1]==[]:
+                exp = [expreplace(exp[0]), []]
+            else:
+                if np.random.rand()<0.5:
+                    exp = [[], expreplace(exp[1])]
+                else:
+                    exp = [expreplace(exp[1]), []]
+            return GPm.ind.Pool(exp)
+        else:
+            # 随机选打分因子/排除因子变异
+            if np.random.rand()<0.5:
+                ind.score = self.mutation_replace(ind.score)
+            else:
+                ind.pool = self.mutation_replace(ind.pool)
+            return GPm.ind.SP(ind.score.code+'&'+ind.pool.code)
+    def popu_mutation_replace(self):
+        ind = self.popu.subset()
+        ind = self.mutation_replace(ind)
+        self.popu.add(ind.code)
+    ## 两因子交叉
+    #def cross_score_exchange(self):
+    #    if len(self.popu.codes)<2:
+    #        #GPm.ino.log('种群规模过小')
+    #        return {} 
+    #    sele = list(self.popu.subset(2).codes)
+    #    exp0 = self.popu.type(sele[0]).exp
+    #    exp1 = self.popu.type(sele[1]).exp
+    #    # 需要打乱顺序，保证交叉的多样性
+    #    shuffle(exp0)
+    #    shuffle(exp1)
+    #    # 如果有一个是单因子的话则合成一个因子
+    #    if (len(exp0)==1)|(len(exp1)==1):
+    #        new = self.popu.type(exp0+exp1)
+    #        self.popu.add(new.code)
+    #        return {new.code}
+    #    cut0 = np.random.randint(1,len(exp0))
+    #    cut1 = np.random.randint(1,len(exp1))
+    #    new_0 = self.popu.type(exp0[:cut0]+exp1[:cut1])
+    #    new_1 = self.popu.type(exp0[cut0:]+exp1[cut1:])
+    #    self.popu.add({new_0.code, new_1.code})
+    #    return {new_0.code, new_1.code} 
     # 种群繁殖
     def multiply(self, multi=2, prob_dict={}):
         # 各算子被执行的概率，如果空则全部算子等概率执形
         if prob_dict=={}:
-            if self.popu.type==GPm.ind.Score:
-                opts = [f for f in dir(Gen) if  ('score' in f)]
-            elif self.popu.type==GPm.ind.Pool:
-                opts = [f for f in dir(Gen) if  ('pool' in f)]
+            #if self.popu.type==GPm.ind.Score:
+            #    opts = [f for f in dir(Gen) if  ('score' in f)]
+            #elif self.popu.type==GPm.ind.Pool:
+            #    opts = [f for f in dir(Gen) if  ('pool' in f)]
             #opts_cross = [f for f in dir(Gen) if  'cross' in f]
+            opts = [f for f in dir(Gen) if  ('popu' in f)]
             prob_ser = pd.Series(np.ones(len(opts)), index=opts)
         else:
             prob_ser = pd.Series(prob_dict.values(), index=prob_dict.keys())
