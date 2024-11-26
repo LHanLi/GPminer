@@ -1,3 +1,6 @@
+# 安装
+pip install GPminer
+
 # GPstrat 主要模块
 遗传算法策略挖掘框架
 
