@@ -21,7 +21,7 @@ class Eval():
                     elif c[0]=='greater':
                         r=(market[c[1]]>c[2])
                     elif c[0]=='equal':
-                        r=(market[c[1]]==c[2])
+                        r=(market[c[1]].isin(c[2]))
                     result.append(r)
                 include = pd.concat(result, axis=1).any(axis=1)
             else:
@@ -35,7 +35,7 @@ class Eval():
                     elif c[0]=='greater':
                         r=(market[c[1]]>c[2])
                     elif c[0]=='equal':
-                        r=(market[c[1]]==c[2])
+                        r=(market[c[1]].isin(c[2]))
                     result.append(r)
                 exclude = pd.concat(result, axis=1).any(axis=1)
             else:
