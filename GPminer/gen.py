@@ -274,11 +274,10 @@ class Gen():
             def expreplace(exp):
                 exp.pop()
                 random_factor = choice(self.basket)
-                # 随机赋一个已有因子的权重
+                # 随机赋一个para_space中阈值
                 exp.append(['equal' if self.para_space[random_factor][0] else\
                                  'less' if np.random.rand()>0.5 else 'greater',\
-                                 random_factor, \
-                                 [choice(self.para_space[random_factor][1])]]) 
+                                 random_factor, [choice(self.para_space[random_factor][1])]])
                 return exp
             if exp[0]==[]:
                 exp = [[], expreplace(exp[1])]
