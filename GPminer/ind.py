@@ -205,7 +205,21 @@ class Pool(Ind):
                 except:
                     count[j[1]] = 1 
         return pd.Series(count).sort_values(ascending=False)
-    
+    def around(self, para_space):
+        def a(exp_):
+            new = []
+            for e in exp_:
+                # 离散变量，扔掉不在para_space中值
+                if para_space[e[1]][0]:
+                    new.append([e[0], e[1], [i for i in e[2] if i in para_space[e[1]][1]]])
+                # 连续变量
+                else:
+                    big = [v for v in para_space[e[1]][1] if v>e[2]][0]
+                    small = [v for v in para_space[e[1]][1] if v<e[2]][-1]
+                    new.append([e[0], e[1], small if (big-e[2])>=(e[2]-small) else big])
+            return new
+        return [a(self.exp[0]), a(self.exp[1])]
+
 # 策略类，包含Score和Pool
 # code: Score.code+'&'+Pool.code, exp: [Score.exp, Pool.exp]
 class SP(Ind):
