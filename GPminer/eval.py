@@ -11,17 +11,20 @@ class Eval():
         self.market = market
         self.pool = pool
         self.score = score
+    def eval_pool(self, pool0=None):
+        if pool0!=None:
+            self.score = GPm.ind.Pool(pool0)
         if self.pool!=None:
             # 默认全包含
             if self.pool.exp[0]!=[]:
                 result = []
                 for c in self.pool.exp[0]:
                     if c[0]=='less':
-                        r=(market[c[1]]<c[2])
+                        r=(self.market[c[1]]<c[2])
                     elif c[0]=='greater':
-                        r=(market[c[1]]>c[2])
+                        r=(self.market[c[1]]>c[2])
                     elif c[0]=='equal':
-                        r=(market[c[1]].isin(c[2]))
+                        r=(self.market[c[1]].isin(c[2]))
                     result.append(r)
                 include = pd.concat(result, axis=1).any(axis=1)
             else:
@@ -31,11 +34,11 @@ class Eval():
                 result = []
                 for c in self.pool.exp[1]:
                     if c[0]=='less':
-                        r=(market[c[1]]<c[2])
+                        r=(self.market[c[1]]<c[2])
                     elif c[0]=='greater':
-                        r=(market[c[1]]>c[2])
+                        r=(self.market[c[1]]>c[2])
                     elif c[0]=='equal':
-                        r=(market[c[1]].isin(c[2]))
+                        r=(self.market[c[1]].isin(c[2]))
                     result.append(r)
                 exclude = pd.concat(result, axis=1).any(axis=1)
             else:
