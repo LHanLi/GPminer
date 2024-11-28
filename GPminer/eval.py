@@ -11,9 +11,9 @@ class Eval():
         self.market = market
         self.pool = pool
         self.score = score
-    def eval_pool(self, pool0=None):
-        if pool0!=None:
-            self.score = GPm.ind.Pool(pool0)
+    def eval_pool(self, poolcode=None):
+        if poolcode!=None:
+            self.pool = GPm.ind.Pool(poolcode)
         if self.pool!=None:
             # 默认全包含
             if self.pool.exp[0]!=[]:
@@ -44,10 +44,10 @@ class Eval():
             else:
                 exclude = pd.Series(False, index=self.market.index)
             self.market['include'] = include&(~exclude) 
-    def eval_score(self, score0=None):
+    def eval_score(self, scorecode=None):
         #time0 = time.time()
-        if score0!=None:
-            self.score = GPm.ind.Score(score0)
+        if scorecode!=None:
+            self.score = GPm.ind.Score(scorecode)
         # 获取筛选/排除后factor排序
         def process_factor(factor_name):
             if self.score.rankall:
