@@ -1,30 +1,44 @@
 import pandas as pd
 from random import choice,sample
 import GPminer as GPm
-import re
 
 
 # 种群
 class Population():
-    # 使用一个集合来储存code值
-    def __init__(self, type=GPm.ind.Score):
-        self.type = type   
+    # 使用一个集合来储存code值, fix是一个个体，为该种群所有个体公用的个体，默认为空
+    def __init__(self, type=GPm.ind.Score, fix_ind=None):
+        self.type = type
         self.codes = set()
+        self.fix_ind = fix_ind
     def code2exp(self, code):
         return self.type(code)
-    # 默认不检查code（背后代表的个体）是否重复
-    def add(self, code, check=False):
+    # 附加上固定属性
+    def add_fix(self, code):
+        if self.fix_ind==None:
+            return code
+        elif '&' in code:  # SP
+            s, p = code.split('&')
+            s_, p_ = self.fix_ind.code.split('&')
+            return self.add_fix(code.split('&')[0]) + '&' + self.add_fix(code.split('&')[1])
+        elif ';' in code:  # Pool
+            _ = self.fix_ind.pool.code.split(';')
+            __ = code.split(';')
+            __[0] = ('|' if (_[0]!='')&(__[0]!='') else '') + __[0]
+            __[1] = ('|' if (_[1]!='')&(__[1]!='') else '') + __[1]
+            return _[0]+__[0]+';'+_[1]+__[1]
+        else:        # Score
+            if code=='':
+                return self.fix_ind.score.code
+            elif self.fix_ind.score.code=='':
+                return code
+            else:
+                return code + '+' + self.fix_ind.score.code
+    # 默认单个输入的时候检查ind是否重复，输入集合时不检查
+    def add(self, code):
         if type(code)!=type(set()):
-            if check:
-                self.codes = self.codes|{self.type(code).code}
-            else:
-                self.codes = self.codes|{code}
+            self.codes = self.codes|{self.type(self.add_fix(code)).code}
         else:
-            if check:
-                for c in code:
-                    self.codes = self.codes|{self.type(c).code}
-            else:
-                self.codes = self.codes|code
+            self.codes = self.codes|code
     def sub(self, code, check=False):
         if type(code)!=type(set()):
             self.codes = self.codes-{self.type(code).code}

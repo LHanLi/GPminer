@@ -47,6 +47,7 @@ class Score(Ind):
         self.exp = exp
     def exp2code(self):
         self.code = '+'.join([str(int(i[2]))+'*'+str(i[1])+'*'+i[0] for i in self.exp])
+        self.score = self
     # 保证等价的表达式唯一
     def uexp(self):
         exp = [] 
@@ -147,6 +148,7 @@ class Pool(Ind):
                 (lambda x:'<' if x=='less' else '>' if x=='greater' else '=')(i[0]) +\
                  (str(i[2]) if type(i[2])!=list else ','.join([str(j) for j in i[2]])) for i in exp]))
         self.code = ';'.join(code)
+        self.pool = self
     def uexp(self):
         def unique_c(exp):
             # 先按因子名称排序，再按逻辑符号，再按值
