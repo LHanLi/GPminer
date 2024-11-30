@@ -39,18 +39,14 @@ class Population():
             self.codes = self.codes|{self.type(self.add_fix(code)).code}
         else:
             self.codes = self.codes|code
-    def sub(self, code, check=False):
+    def sub(self, code):
         if type(code)!=type(set()):
             self.codes = self.codes-{self.type(code).code}
         else:
-            if check:
-                for c in code:
-                    self.codes = self.codes|{self.type(c).code}
-            else:
-                self.codes = self.codes|code
-    def reset(self, code, check=False):
+            self.codes = self.codes-code
+    def reset(self, code):
         self.codes = set()
-        self.add(code, check)
+        self.add(code)
     def get_name(self, n=3):
         factor_count = pd.Series()  # 因子出现频率
         for i in self.codes:
