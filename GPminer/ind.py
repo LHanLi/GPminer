@@ -197,7 +197,8 @@ class Pool(Ind):
                             values = set(value)
                         else:
                             values = set([value])
-                        unique_exp.append([opt, factor, sorted(list(values))])
+                        unique_exp.append([opt, factor, sorted([str(v) for v in values])])
+                        #unique_exp.append([opt, factor, sorted(values)])
                     else:
                         values = [value, ]
                         unique_exp.append(c)

@@ -38,10 +38,12 @@ class Gen():
                 return 
             self.para_space = {}
             for factor in self.pool_basket:
-                try:
+                #try:
+                if market[factor].dtype in ['float64', type(1.0), type(1)]:
                     self.para_space[factor] = (False, [market[factor].quantile(i) \
                                     for i in np.linspace(0.01,0.99,21)])   # 数值因子
-                except:         # 离散因子
+                else:
+                #except:         # 离散因子
                     self.para_space[factor] = (True, list(market[factor].unique())) 
     # 从basket中因子获得popu
     def get_seeds(self, exclude=True):
