@@ -8,7 +8,7 @@ pip install GPminer
 
 
 # hello world
-demo文件夹，自定义参数可修改
+demo文件夹，数据与自定义参数可修改
 
 
 
