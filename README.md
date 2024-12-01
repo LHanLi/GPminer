@@ -8,7 +8,7 @@ pip install GPminer
 
 
 # hello world
-demo文件夹，运行run.ipynb，超参数与数据是可修改部分
+demo文件夹，自定义参数可修改
 
 
 
