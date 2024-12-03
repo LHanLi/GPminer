@@ -12,7 +12,7 @@ setup(
     version="1.2.1",
     author="LH.Li",
     author_email="lh98lee@zju.edu.cn",  
-    description='Package for backtest',
+    description='Package for factor strategy mining by GP algorithm',
     long_description=long_description, 
     # 描述文件为md格式
     long_description_content_type="text/markdown",
