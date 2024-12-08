@@ -12,5 +12,7 @@ pip install GPminer
 # hello world
 demo文件夹，数据与自定义参数可修改
 
-
+# -------------------- 联系作者 ---------------------
+对于框架外需求或改进建议，可以联系作者。
+![cde0c826807b3836377d0e13cf4bbf4](https://github.com/user-attachments/assets/3954cec9-8d4e-481c-a014-2ec971ab7cb4)
 
