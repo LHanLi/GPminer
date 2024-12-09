@@ -122,9 +122,10 @@ class Miner():
                     one = set(fitness_df.loc[sample(list(set(fitness_df.index)-select), int(len(fitness_df)/10))]\
                                 .sort_values(by=self.fitness, ascending=False).index[:1])
                     select = select|one
-                popu0.reset(select)  
+                popu0.reset(select)
             GPm.ino.log('第%s轮进化完成，最大%s:%.2lf'%(g, self.fitness, fitness_df.iloc[0][self.fitness]))
-            if ((g-max_loc)>self.tolerance_g)|(g==(self.max_g-1)):
+            GPm.ino.log('%s %s %s %s'%(g, max_loc, self.tolerance_g, self.max_g))
+            if ((g-max_loc)>=self.tolerance_g)|(g>=(self.max_g-1)):
                 cost = time.time()-t0
                 GPm.ino.log('=====此初始种群进化完成=====共计算%d个策略，总耗时%.1lfs，单策略耗时%.2lfs'%(\
                     len(fitness_all), cost, cost/len(fitness_all)))
@@ -134,7 +135,6 @@ class Miner():
                 os.rename(workfile, 'result-' + workfile+'-'+popu0.get_name())
                 break
             # 种群繁殖
-            #t0 = time.time()
             gen0.multiply(1/self.evolution_ratio)
             GPm.ino.log('交叉变异生成第%s代种群'%(g+1))
 
