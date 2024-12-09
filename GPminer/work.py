@@ -1,3 +1,12 @@
+import pandas as pd
+import numpy as np
+from random import sample
+from joblib import Parallel, delayed
+import GPminer as GPm
+import FreeBack as FB
+import time, datetime, os
+
+
 class Miner():
     # 矿工初始化需输入策略超参数，share表示挖掘出一组策略的共享部分，
     # 如果share是pool则挖掘score，反之亦然，如果是None则挖掘SP
@@ -54,7 +63,7 @@ class Miner():
         fitness_df = pd.DataFrame()
         # 后续进化在popu0上操作 
         popu0 = GPm.popu.Population(type=GPm.ind.Score)
-        eval0 = GPm.eval.Eval(market, pool=self.share)
+        eval0 = GPm.eval.Eval(self.market, pool=self.share)
         eval0.eval_pool()
         for ind in init_seeds:
             popu0.add(ind) 
@@ -104,10 +113,10 @@ class Miner():
                 max_loc = g
             fitness_df.to_csv(workfile+'/fitness%s.csv'%g)
             # 选择
-            if select_alg=='cut':
+            if self.select_alg=='cut':
                 popu0.reset(set(fitness_df[:self.population_size].index)) # 截断选择
             # 锦标赛，不放回
-            elif select_alg=='tournament':
+            elif self.select_alg=='tournament':
                 select = set()
                 while len(select)<self.population_size:
                     one = set(fitness_df.loc[sample(list(set(fitness_df.index)-select), int(len(fitness_df)/10))]\
@@ -115,7 +124,7 @@ class Miner():
                     select = select|one
                 popu0.reset(select)  
             GPm.ino.log('第%s轮进化完成，最大%s:%.2lf'%(g, self.fitness, fitness_df.iloc[0][self.fitness]))
-            if ((g-max_loc)>tolerance_g)|(g==(self.max_g-1)):
+            if ((g-max_loc)>self.tolerance_g)|(g==(self.max_g-1)):
                 cost = time.time()-t0
                 GPm.ino.log('=====此初始种群进化完成=====共计算%d个策略，总耗时%.1lfs，单策略耗时%.2lfs'%(\
                     len(fitness_all), cost, cost/len(fitness_all)))
