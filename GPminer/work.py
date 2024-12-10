@@ -124,7 +124,6 @@ class Miner():
                     select = select|one
                 popu0.reset(select)
             GPm.ino.log('第%s轮进化完成，最大%s:%.2lf'%(g, self.fitness, fitness_df.iloc[0][self.fitness]))
-            GPm.ino.log('%s %s %s %s'%(g, max_loc, self.tolerance_g, self.max_g))
             if ((g-max_loc)>=self.tolerance_g)|(g>=(self.max_g-1)):
                 cost = time.time()-t0
                 GPm.ino.log('=====此初始种群进化完成=====共计算%d个策略，总耗时%.1lfs，单策略耗时%.2lfs'%(\
