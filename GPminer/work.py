@@ -11,7 +11,7 @@ class Miner():
     # 矿工初始化需输入策略超参数，share表示挖掘出一组策略的共享部分，
     # 如果share是pool则挖掘score，反之亦然，如果是None则挖掘SP
     def __init__(self, market, benchmark=None, share=None, pool_basket=None, score_basket=None, p0=None,\
-                  hold_num=5, comm=10/1e4, price='close'):
+                  hold_num=5, comm=10/1e4, price='close', code_returns=None):
         self.market = market
         self.benchmark = benchmark
         self.share = share
@@ -27,6 +27,7 @@ class Miner():
         self.hold_num = hold_num
         self.comm = comm
         self.price = price
+        self.code_returns = code_returns
     def prepare(self, fitness='sharpe',\
                  population_size=10, evolution_ratio=0.2, tolerance_g=3, max_g=10,\
                   prob_dict={}, select_alg='cut', n_core=4):
@@ -77,7 +78,7 @@ class Miner():
             def single(p):
                 result = pd.DataFrame()
                 eval0.eval_score(p)
-                strat0 = eval0.backtest(self.hold_num, self.price)
+                strat0 = eval0.backtest(self.hold_num, self.price, self.code_returns)
                 post0 = FB.post.StratPost(strat0, eval0.market, benchmark=self.benchmark,\
                                             comm=self.comm, show=False)
                 result.loc[p, 'return_total'] = post0.return_total
