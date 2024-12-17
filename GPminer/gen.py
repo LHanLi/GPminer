@@ -9,7 +9,7 @@ import time, copy
 
 class Gen():
     # 因子库（针对score和pool可以单独指定因子库），种群，市场，种群的类型
-    def __init__(self, basket=[], popu0=None, market=None, indtype='Score',\
+    def __init__(self, basket=[], popu0=None, market=None, indtype=GPm.ind.Score,\
                         score_basket=None, pool_basket=None):
         if (score_basket==None)&(pool_basket==None):
             self.score_basket = self.pool_basket = self.basket = basket
@@ -23,12 +23,13 @@ class Gen():
             self.score_basket = score_basket
             self.pool_basket = pool_basket
         if popu0==None:
-            if indtype=='Score':
-                self.popu = GPm.popu.Population(GPm.ind.Score)
-            elif indtype=='Pool':
-                self.popu = GPm.popu.Population(GPm.ind.Pool)
-            elif indtype=='SP':
-                self.popu = GPm.popu.Population(GPm.ind.SP)
+            #if indtype=='Score':
+            #    self.popu = GPm.popu.Population(GPm.ind.Score)
+            #elif indtype=='Pool':
+            #    self.popu = GPm.popu.Population(GPm.ind.Pool)
+            #elif indtype=='SP':
+            #    self.popu = GPm.popu.Population(GPm.ind.SP)
+            self.popu = GPm.popu.Population(indtype)
         else:
             self.popu = popu0
         # 初始化pool的参数域，需要输入market
