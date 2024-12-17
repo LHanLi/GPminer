@@ -91,16 +91,16 @@ class Miner():
                 eval0.eval_score(p)
             elif self.indtype==GPm.ind.Pool:
                 eval0.eval_pool(p)
-                #if eval0.market['include'].mean()<1-self.max_extract:
-                #    result.loc[p, :] = -99999
-                #    return result
+                if eval0.market['include'].mean()<1-self.max_extract:
+                    result.loc[p, :] = -99999
+                    return result
                 eval0.eval_score()
             else:
                 psplit = p.split('&')
                 eval0.eval_pool(psplit[1])
-                #if eval0.market['include'].mean()<1-self.max_extract:
-                #    result.loc[p, :] = -99999
-                #    return result
+                if eval0.market['include'].mean()<1-self.max_extract:
+                    result.loc[p, :] = -99999
+                    return result
                 eval0.eval_score(psplit[0])
             strat0 = eval0.backtest(self.hold_num, self.price, self.code_returns)
             post0 = FB.post.StratPost(strat0, eval0.market, benchmark=self.benchmark,\
