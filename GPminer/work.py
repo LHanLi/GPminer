@@ -10,11 +10,18 @@ import time, datetime, os
 class Miner():
     # 矿工初始化需输入策略超参数，share表示挖掘出一组策略的共享部分，
     # 如果share是pool则挖掘score，反之亦然，如果是None则挖掘SP
+    # 对于Pool与SP挖掘，可以设置最大排除比例，如果挖掘出的排除因子超出此比例则适应度直接赋为最差
     def __init__(self, market, benchmark=None, share=None, pool_basket=None, score_basket=None, p0=None,\
-                  hold_num=5, comm=10/1e4, price='close', code_returns=None):
+                  hold_num=5, comm=10/1e4, price='close', code_returns=None, max_extract=1):
         self.market = market
         self.benchmark = benchmark
         self.share = share
+        if type(self.share)==GPm.ind.Pool:
+            self.indtype = GPm.ind.Score
+        elif type(self.share)==GPm.ind.Score:
+            self.indtype = GPm.ind.Pool
+        else:
+            self.indtype = GPm.ind.SP
         if pool_basket!=None:
             self.pool_basket = pool_basket
         else:
@@ -28,6 +35,7 @@ class Miner():
         self.comm = comm
         self.price = price
         self.code_returns = code_returns
+        self.max_extract = max_extract
     def prepare(self, fitness='sharpe',\
                  population_size=10, evolution_ratio=0.2, tolerance_g=3, max_g=10,\
                   prob_dict={}, select_alg='cut', n_core=4):
@@ -40,8 +48,8 @@ class Miner():
         self.select_alg = select_alg
         self.n_core = n_core
         # 生成初代种群需要
-        self.gen0 = GPm.gen.Gen(score_basket=self.score_basket,\
-                            market=self.market, indtype='Score')
+        self.gen0 = GPm.gen.Gen(score_basket=self.score_basket, pool_basket=self.pool_basket,\
+                            market=self.market, indtype=self.indtype)
         if self.p0!=None:
             self.gen0.popu.add(self.p0.code)
             while len(self.gen0.popu.codes)<int(self.population_size/self.evolution_ratio):
@@ -63,36 +71,56 @@ class Miner():
         fitness_all = pd.DataFrame()
         fitness_df = pd.DataFrame()
         # 后续进化在popu0上操作 
-        popu0 = GPm.popu.Population(type=GPm.ind.Score)
-        eval0 = GPm.eval.Eval(self.market, pool=self.share)
-        eval0.eval_pool()
+        popu0 = GPm.popu.Population(type=self.indtype)
+        if self.indtype==GPm.ind.Score:
+            eval0 = GPm.eval.Eval(self.market, pool=self.share)
+            eval0.eval_pool()
+        elif self.indtype==GPm.ind.Pool:
+            eval0 = GPm.eval.Eval(self.market, score=self.share)
+        else:
+            eval0 = GPm.eval.Eval(self.market)
         for ind in init_seeds:
             popu0.add(ind) 
-        gen0 = GPm.gen.Gen(score_basket=self.score_basket, market=self.market,\
-                            indtype='Score', popu0=popu0)
+        gen0 = GPm.gen.Gen(score_basket=self.score_basket, pool_basket=self.pool_basket, market=self.market,\
+                            indtype=self.indtype, popu0=popu0)
+        # 计算适应度
+        def single(p):
+            result = pd.DataFrame(columns=['return_total', 'return_annual', 'sigma', 'drawdown', 'excess_annual', \
+                      'excess_sigma', 'excess_sharpe', 'excess_drawdown', 'beta', 'alpha'])
+            if self.indtype==GPm.ind.Score:
+                eval0.eval_score(p)
+            elif self.indtype==GPm.ind.Pool:
+                eval0.eval_pool(p)
+                #if eval0.market['include'].mean()<1-self.max_extract:
+                #    result.loc[p, :] = -99999
+                #    return result
+                eval0.eval_score()
+            else:
+                psplit = p.split('&')
+                eval0.eval_pool(psplit[1])
+                #if eval0.market['include'].mean()<1-self.max_extract:
+                #    result.loc[p, :] = -99999
+                #    return result
+                eval0.eval_score(psplit[0])
+            strat0 = eval0.backtest(self.hold_num, self.price, self.code_returns)
+            post0 = FB.post.StratPost(strat0, eval0.market, benchmark=self.benchmark,\
+                                        comm=self.comm, show=False)
+            result.loc[p, 'return_total'] = post0.return_total
+            result.loc[p, 'return_annual'] = post0.return_annual
+            result.loc[p, 'sigma'] = -post0.sigma
+            result.loc[p, 'sharpe'] = post0.sharpe
+            result.loc[p, 'drawdown'] = -max(post0.drawdown)
+            result.loc[p, 'excess_annual'] = post0.excess_return_annual
+            result.loc[p, 'excess_sigma'] = -post0.excess_sigma
+            result.loc[p, 'excess_sharpe'] = post0.excess_sharpe
+            result.loc[p, 'excess_drawdown'] = -max(post0.excess_drawdown)
+            result.loc[p, 'beta'] = post0.beta
+            result.loc[p, 'alpha'] = post0.alpha*250*100
+            return result
         max_fitness = -99999
         max_loc = 0
         for g in range(self.max_g):
             GPm.ino.log('第%s代'%(g))
-            # 计算适应度
-            def single(p):
-                result = pd.DataFrame()
-                eval0.eval_score(p)
-                strat0 = eval0.backtest(self.hold_num, self.price, self.code_returns)
-                post0 = FB.post.StratPost(strat0, eval0.market, benchmark=self.benchmark,\
-                                            comm=self.comm, show=False)
-                result.loc[p, 'return_total'] = post0.return_total
-                result.loc[p, 'return_annual'] = post0.return_annual
-                result.loc[p, 'sigma'] = -post0.sigma
-                result.loc[p, 'sharpe'] = post0.sharpe
-                result.loc[p, 'drawdown'] = -max(post0.drawdown)
-                result.loc[p, 'excess_annual'] = post0.excess_return_annual
-                result.loc[p, 'excess_sigma'] = -post0.excess_sigma
-                result.loc[p, 'excess_sharpe'] = post0.excess_sharpe
-                result.loc[p, 'excess_drawdown'] = -max(post0.excess_drawdown)
-                result.loc[p, 'beta'] = post0.beta
-                result.loc[p, 'alpha'] = post0.alpha*250*100
-                return result
             if g!=0:
                 # 之前已经计算过的无需计算
                 fitness_df = fitness_all.loc[list(popu0.codes&set(fitness_all.index))]
