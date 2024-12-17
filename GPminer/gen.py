@@ -40,7 +40,7 @@ class Gen():
             self.para_space = {}
             for factor in self.pool_basket:
                 # 数值因子，小于等于21个数时全部因子值进入参数空间
-                if market[factor].iloc[0].dtype in ['float64', 'int64', type(1.0), type(1)]:
+                if type(market[factor].iloc[0]) in [np.float64, np.int64, type(1.0), type(1)]:
                     if len(market[factor].unique())>21:
                         self.para_space[factor] = (False, [market[factor].quantile(i) \
                                     for i in np.linspace(0.01,0.99,21)]) 
