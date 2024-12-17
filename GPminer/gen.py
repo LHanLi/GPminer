@@ -39,11 +39,13 @@ class Gen():
                 return 
             self.para_space = {}
             for factor in self.pool_basket:
-                # 21个以上独立元素且是数值型，则为数值因子
-                if (len(market[factor].unique())>21)&(market[factor].dtype \
-                                        in ['float64', 'int64', type(1.0), type(1)]):
-                    self.para_space[factor] = (False, [market[factor].quantile(i) \
-                                    for i in np.linspace(0.01,0.99,21)])   # 数值因子
+                # 数值因子，小于等于21个数时全部因子值进入参数空间
+                if market[factor].iloc[0].dtype in ['float64', 'int64', type(1.0), type(1)]:
+                    if len(market[factor].unique())>21:
+                        self.para_space[factor] = (False, [market[factor].quantile(i) \
+                                    for i in np.linspace(0.01,0.99,21)]) 
+                    else:
+                        self.para_space[factor] = (False, sorted(market[factor].unique())) 
                 else:
                     self.para_space[factor] = (True, list(market[factor].unique())) 
     # 从basket中因子获得popu
