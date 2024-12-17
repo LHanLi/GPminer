@@ -12,7 +12,7 @@ class Miner():
     # 如果share是pool则挖掘score，反之亦然，如果是None则挖掘SP
     # 对于Pool与SP挖掘，可以设置最大排除比例，如果挖掘出的排除因子超出此比例则适应度直接赋为最差
     def __init__(self, market, benchmark=None, share=None, pool_basket=None, score_basket=None, p0=None,\
-                  hold_num=5, comm=10/1e4, price='close', code_returns=None, max_extract=1):
+                  hold_num=5, comm=10/1e4, price='close', code_returns=None, max_extract=1, fixp=None):
         self.market = market
         self.benchmark = benchmark
         self.share = share
@@ -36,6 +36,7 @@ class Miner():
         self.price = price
         self.code_returns = code_returns
         self.max_extract = max_extract
+        self.fixp = fixp
     def prepare(self, fitness='sharpe',\
                  population_size=10, evolution_ratio=0.2, tolerance_g=3, max_g=10,\
                   prob_dict={}, select_alg='cut', n_core=4):
@@ -48,15 +49,16 @@ class Miner():
         self.select_alg = select_alg
         self.n_core = n_core
         # 生成初代种群需要
+        popu0 = GPm.popu.Population(type=self.indtype, fix_ind=self.fixp)
         self.gen0 = GPm.gen.Gen(score_basket=self.score_basket, pool_basket=self.pool_basket,\
-                            market=self.market, indtype=self.indtype)
+                            market=self.market, indtype=self.indtype, popu0=popu0)
         if self.p0!=None:
             self.gen0.popu.add(self.p0.code)
             while len(self.gen0.popu.codes)<int(self.population_size/self.evolution_ratio):
                 self.gen0.multiply()
         else:
             self.seeds = list(self.gen0.get_seeds())
-    def run(self, fixp=None):
+    def run(self):
         workfile = datetime.datetime.now().strftime("%m%d%H%M_%S_%f")+\
                             '_%s'%np.random.rand()
         t0 = time.time()
@@ -71,7 +73,7 @@ class Miner():
         fitness_all = pd.DataFrame()
         fitness_df = pd.DataFrame()
         # 后续进化在popu0上操作 
-        popu0 = GPm.popu.Population(type=self.indtype, fix_ind=fixp)
+        popu0 = GPm.popu.Population(type=self.indtype, fix_ind=self.fixp)
         if self.indtype==GPm.ind.Score:
             eval0 = GPm.eval.Eval(self.market, pool=self.share)
             eval0.eval_pool()
