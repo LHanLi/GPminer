@@ -39,12 +39,12 @@ class Gen():
                 return 
             self.para_space = {}
             for factor in self.pool_basket:
-                #try:
-                if market[factor].dtype in ['float64', 'int64', type(1.0), type(1)]:
+                # 21个以上独立元素且是数值型，则为数值因子
+                if (len(market[factor].unique())>21)&(market[factor].dtype \
+                                        in ['float64', 'int64', type(1.0), type(1)]):
                     self.para_space[factor] = (False, [market[factor].quantile(i) \
                                     for i in np.linspace(0.01,0.99,21)])   # 数值因子
                 else:
-                #except:         # 离散因子
                     self.para_space[factor] = (True, list(market[factor].unique())) 
     # 从basket中因子获得popu
     def get_seeds(self, exclude=True):
