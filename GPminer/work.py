@@ -56,7 +56,7 @@ class Miner():
                 self.gen0.multiply()
         else:
             self.seeds = list(self.gen0.get_seeds())
-    def run(self):
+    def run(self, fixp=None):
         workfile = datetime.datetime.now().strftime("%m%d%H%M_%S_%f")+\
                             '_%s'%np.random.rand()
         t0 = time.time()
@@ -71,7 +71,7 @@ class Miner():
         fitness_all = pd.DataFrame()
         fitness_df = pd.DataFrame()
         # 后续进化在popu0上操作 
-        popu0 = GPm.popu.Population(type=self.indtype)
+        popu0 = GPm.popu.Population(type=self.indtype, fix_ind=fixp)
         if self.indtype==GPm.ind.Score:
             eval0 = GPm.eval.Eval(self.market, pool=self.share)
             eval0.eval_pool()
