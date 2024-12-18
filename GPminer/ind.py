@@ -6,8 +6,11 @@ from random import shuffle
 # 种群的个体单元
 # 可以通过code或exp生成，code和exp一一对应，code用于hash，exp用于计算。
 class Ind():
-    def __init__(self, input=None):
-        if type(input)==type(""):
+    def __init__(self, input=""):
+        if input=="":
+            self.exp=[]
+            self.code=""
+        elif type(input)==type(""):
             self.code = input
             self.code2exp()
             self.uexp()
