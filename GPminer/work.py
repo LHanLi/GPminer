@@ -109,17 +109,17 @@ class Miner():
             strat0 = eval0.backtest(self.hold_num, self.price, self.code_returns)
             post0 = FB.post.StratPost(strat0, eval0.market, benchmark=self.benchmark,\
                                         comm=self.comm, show=False)
+            result.loc[p, 'excess_sharpe'] = post0.excess_sharpe
+            result.loc[p, 'sharpe'] = post0.sharpe
             result.loc[p, 'return_total'] = post0.return_total
             result.loc[p, 'return_annual'] = post0.return_annual
-            result.loc[p, 'sigma'] = -post0.sigma
-            result.loc[p, 'sharpe'] = post0.sharpe
             result.loc[p, 'drawdown'] = -max(post0.drawdown)
-            result.loc[p, 'excess_annual'] = post0.excess_return_annual
-            result.loc[p, 'excess_sigma'] = -post0.excess_sigma
-            result.loc[p, 'excess_sharpe'] = post0.excess_sharpe
-            result.loc[p, 'excess_drawdown'] = -max(post0.excess_drawdown)
             result.loc[p, 'beta'] = post0.beta
             result.loc[p, 'alpha'] = post0.alpha*250*100
+            result.loc[p, 'sigma'] = -post0.sigma
+            result.loc[p, 'excess_annual'] = post0.excess_return_annual
+            result.loc[p, 'excess_sigma'] = -post0.excess_sigma
+            result.loc[p, 'excess_drawdown'] = -max(post0.excess_drawdown)
             return result
         max_fitness = -99999
         max_loc = 0
