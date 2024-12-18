@@ -39,11 +39,12 @@ class Gen():
                 return 
             self.para_space = {}
             for factor in self.pool_basket:
-                # 数值因子，小于等于21个数时全部因子值进入参数空间
+                # 数值因子，小于等于divide_n个数时全部因子值进入参数空间
+                divide_n = 51
                 if type(market[factor].iloc[0]) in [np.float64, np.int64, type(1.0), type(1)]:
-                    if len(market[factor].unique())>21:
+                    if len(market[factor].unique())>divide_n:
                         self.para_space[factor] = (False, [market[factor].quantile(i) \
-                                    for i in np.linspace(0.01,0.99,21)]) 
+                                    for i in np.linspace(0.01,0.99,divide_n)]) 
                     else:
                         self.para_space[factor] = (False, sorted(market[factor].unique())) 
                 else:
@@ -239,8 +240,10 @@ class Gen():
                     exp.pop()
                 else:
                     random_factor = choice(self.pool_basket)
-                    exp.append(['equal' if self.para_space[random_factor][0] else\
-                             'less' if np.random.rand()>0.5 else 'greater', random_factor, \
+                    if self.para_space[random_factor][0]:
+                        exp.append(['equal', random_factor, [choice(self.para_space[random_factor][1])]])
+                    else:
+                        exp.append(['less' if np.random.rand()>0.5 else 'greater', random_factor, \
                              choice(self.para_space[random_factor][1])])
                 return exp
             if exp[0]==[]:
