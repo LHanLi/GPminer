@@ -88,8 +88,9 @@ class Miner():
                             indtype=self.indtype, popu0=popu0)
         # 计算适应度
         def single(p):
-            result = pd.DataFrame(columns=['return_total', 'return_annual', 'sigma', 'drawdown', 'excess_annual', \
-                      'excess_sigma', 'excess_sharpe', 'excess_drawdown', 'beta', 'alpha'])
+            result = pd.DataFrame(columns=['excess_sharpe', 'sharpe', 'return_total', 'return_annual',\
+                    'beta', 'alpha', 'sigma', 'drawdown', \
+                     'excess_annual',  'excess_sigma', 'excess_drawdown'])
             if self.indtype==GPm.ind.Score:
                 eval0.eval_score(p)
             elif self.indtype==GPm.ind.Pool:
