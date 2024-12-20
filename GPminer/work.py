@@ -90,7 +90,7 @@ class Miner():
         def single(p):
             result = pd.DataFrame(columns=['return_total', 'return_annual', 'excess_annual',\
                     'sharpe', 'excess_sharpe', 'drawdown', 'excess_drawdown', \
-                    'sigam', 'excess_sigma', 'beta', 'alpha'])
+                    'sigma', 'excess_sigma', 'beta', 'alpha'])
             if self.indtype==GPm.ind.Score:
                 eval0.eval_score(p)
             elif self.indtype==GPm.ind.Pool:
