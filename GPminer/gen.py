@@ -317,15 +317,13 @@ class Gen():
         ind = self.popu.subset()
         ind = self.mutation_replace(ind)
         self.popu.add(ind.code)
+    # 合成因子
+    def mutation_sum(self, ind0, ind1):
+        pass
     # 种群繁殖
     def multiply(self, multi=2, prob_dict={}):
         # 各算子被执行的概率，如果空则全部算子等概率执形
         if prob_dict=={}:
-            #if self.popu.type==GPm.ind.Score:
-            #    opts = [f for f in dir(Gen) if  ('score' in f)]
-            #elif self.popu.type==GPm.ind.Pool:
-            #    opts = [f for f in dir(Gen) if  ('pool' in f)]
-            #opts_cross = [f for f in dir(Gen) if  'cross' in f]
             opts = [f for f in dir(Gen) if  ('popu' in f)]
             prob_ser = pd.Series(np.ones(len(opts)), index=opts)
         else:
