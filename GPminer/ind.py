@@ -225,11 +225,14 @@ class Pool(Ind):
                 # 离散变量，扔掉不在para_space中值
                 if para_space[e[1]][0]:
                     new.append([e[0], e[1], [i for i in e[2] if i in para_space[e[1]][1]]])
-                # 连续变量，取最接近的
+                # 连续变量，如果值不在para_space中的话，取最接近的
                 else:
+                    if e[2] in para_space[e[1]][1]:
+                        new.append([e[0], e[1], e[2]])
+                        continue 
                     try:
                         big = [v for v in para_space[e[1]][1] if v>e[2]][0]
-                    except:
+                    except:  # 边界值
                         new.append([e[0], e[1], para_space[e[1]][1][-1]])
                         continue
                     try:
