@@ -1,7 +1,7 @@
 import math
 import numpy as np 
 import pandas as pd
-from random import shuffle
+from random import shuffle,sample
 
 # 种群的个体单元
 # 可以通过code或exp生成，code和exp一一对应，code用于hash，exp用于计算。
@@ -102,6 +102,7 @@ class Score(Ind):
 # code：'a<130|b=A,B|c>C'  exp:[[['less', 'a', 130]], [['equal', 'b', ['A', 'B']], ['great', 'c', 'C']]
 # ;前为include，后为exclude条件, 意为全部a<130的股票中排除掉b为A和B以及c大于C的股票。 
 class Pool(Ind):
+    max_exp_len = 10 # 最大因子数
     def code2exp(self):
         innex = self.code.split(';')
         final_exp = []
@@ -207,6 +208,10 @@ class Pool(Ind):
                     else:
                         values = [value, ]
                         unique_exp.append(c)
+                    # 限制公式最大长度
+                    if len(unique_exp)>self.max_exp_len:
+                        unique_exp = [unique_exp[i] for i in sorted(sample(range(len(unique_exp)), \
+                                                                       self.max_exp_len))]
             return unique_exp
         self.exp = [unique_c(self.exp[0]), unique_c(self.exp[1])]
     def factors(self):
