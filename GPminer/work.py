@@ -54,10 +54,11 @@ class Miner():
                             market=self.market, indtype=self.indtype, popu0=popu0)
         if type(self.p0)==type(None):
             self.seeds = list(self.gen0.get_seeds())
-        elif type(self.p0)==type(set()):
-            self.seeds = list(self.p0)
         else:
-            self.gen0.popu.add(self.p0.code)
+            if type(self.p0)==type(set()):
+                self.gen0.popu.add(self.p0)
+            else:
+                self.gen0.popu.add(self.p0.code)
             while len(self.gen0.popu.codes)<int(self.population_size/self.evolution_ratio):
                 self.gen0.multiply()
             self.seeds = list(self.gen0.popu.codes)
@@ -65,11 +66,13 @@ class Miner():
         workfile = datetime.datetime.now().strftime("%m%d%H%M_%S_%f")+\
                             '_%s'%np.random.rand()
         t0 = time.time()
-        if self.p0!=None:
-            init_seeds = set(sample(self.seeds, int(self.population_size/self.evolution_ratio)))|\
-                    {self.p0.code}
-        else:
+        if type(self.p0)==type(None):
             init_seeds = sample(self.seeds, int(self.population_size/self.evolution_ratio))
+        elif type(self.p0)==type(set()):
+            init_seeds = set(sample(self.seeds, int(self.population_size/self.evolution_ratio)))
+        else:
+            init_seeds = set(sample(self.seeds, int(self.population_size/self.evolution_ratio)-1))|\
+                    {self.p0.code}
         GPm.ino.log('生成%s个p作为初始种群'%len(init_seeds))
         GPm.ino.log('=====此初始种群进化开始=====')
         os.mkdir(workfile)
