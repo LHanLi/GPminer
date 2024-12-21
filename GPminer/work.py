@@ -52,13 +52,15 @@ class Miner():
         popu0 = GPm.popu.Population(type=self.indtype, fix_ind=self.fixp)
         self.gen0 = GPm.gen.Gen(score_basket=self.score_basket, pool_basket=self.pool_basket,\
                             market=self.market, indtype=self.indtype, popu0=popu0)
-        if self.p0!=None:
+        if type(self.p0)==type(None):
+            self.seeds = list(self.gen0.get_seeds())
+        elif type(self.p0)==type(set()):
+            self.seeds = list(self.p0)
+        else:
             self.gen0.popu.add(self.p0.code)
             while len(self.gen0.popu.codes)<int(self.population_size/self.evolution_ratio):
                 self.gen0.multiply()
             self.seeds = list(self.gen0.popu.codes)
-        else:
-            self.seeds = list(self.gen0.get_seeds())
     def run(self):
         workfile = datetime.datetime.now().strftime("%m%d%H%M_%S_%f")+\
                             '_%s'%np.random.rand()
