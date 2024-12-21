@@ -99,8 +99,9 @@ class Score(Ind):
         return 1e5*ns+ws 
 
 # 排除/选取因子（确定策略池子）
-# code：'a<130|b=A,B|c>C'  exp:[[['less', 'a', 130]], [['equal', 'b', ['A', 'B']], ['great', 'c', 'C']]
-# ;前为include，后为exclude条件, 意为全部a<130的股票中排除掉b为A和B以及c大于C的股票。 
+# code：'a<130|b=A,B|c>C'  exp:[[['less', 'a', 130]], [['equal', 'b', ['A', 'B']], ['great', 'c', 'C']] 
+# ;前为include，后为exclude条件, 意为全部a<130的股票中排除掉b为A和B以及c大于C的股票。
+# 不同单因子之间的|表示或还是且取决于self.mod = 'or' or 'and' 
 class Pool(Ind):
     max_exp_len = 10 # 最大因子数
     def code2exp(self):
