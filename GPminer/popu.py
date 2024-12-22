@@ -20,7 +20,7 @@ class Population():
             s, p = code.split('&')
             s_, p_ = self.fix_ind.code.split('&')
             return self.add_fix(code.split('&')[0]) + '&' + self.add_fix(code.split('&')[1])
-        elif ';' in code:  # Pool
+        elif ';' in code:  # Pool/Pooland
             _ = self.fix_ind.pool.code.split(';')
             __ = code.split(';')
             __[0] = ('|' if (_[0]!='')&(__[0]!='') else '') + __[0]
