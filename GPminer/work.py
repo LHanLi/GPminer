@@ -101,11 +101,11 @@ class Miner():
                     'sigma', 'excess_sigma', 'beta', 'alpha'])
             if self.indtype==GPm.ind.Score:
                 eval0.eval_score(p)
-            elif self.indtype==GPm.ind.Pool:
+            elif (self.indtype==GPm.ind.Pool) | (self.indtype==GPm.ind.Pooland):
                 if pooltype=='or':
-                    eval0.eval_pool()
+                    eval0.eval_pool(p)
                 elif pooltype=='and':
-                    eval0.eval_pool(mod='and')
+                    eval0.eval_pool(p, mod='and')
                 if eval0.market['include'].mean()<1-self.max_extract:
                     result.loc[p, :] = -99999
                     return result
