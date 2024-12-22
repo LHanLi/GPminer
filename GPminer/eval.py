@@ -12,11 +12,13 @@ class Eval():
         self.pool = pool
         self.score = score
     def eval_pool(self, poolcode=None, mod='or'):
-        if self.pool!=None:
+        if poolcode!=None:
             if mod=='or':
                 self.pool = GPm.ind.Pool(poolcode)
             elif mod=='and':
                 self.pool = GPm.ind.Pooland(poolcode)
+        # 如果pool为None则include=True
+        if self.pool!=None:
             # 默认全包含
             if self.pool.exp[0]!=[]:
                 result = []
@@ -51,7 +53,9 @@ class Eval():
                     exclude = pd.concat(result, axis=1).all(axis=1)
             else:
                 exclude = pd.Series(False, index=self.market.index)
-            self.market['include'] = include&(~exclude) 
+            self.market['include'] = include&(~exclude)
+        else:
+            self.market['include'] = True 
     def eval_score(self, scorecode=None):
         #time0 = time.time()
         if scorecode!=None:
