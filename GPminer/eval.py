@@ -11,10 +11,12 @@ class Eval():
         self.market = market
         self.pool = pool
         self.score = score
-    def eval_pool(self, poolcode=None):
-        if poolcode!=None:
-            self.pool = GPm.ind.Pool(poolcode)
+    def eval_pool(self, poolcode=None, mod='or'):
         if self.pool!=None:
+            if mod=='or':
+                self.pool = GPm.ind.Pool(poolcode)
+            elif mod=='and':
+                self.pool = GPm.ind.Pooland(poolcode)
             # 默认全包含
             if self.pool.exp[0]!=[]:
                 result = []
@@ -26,7 +28,10 @@ class Eval():
                     elif c[0]=='equal':
                         r=(self.market[c[1]].isin(c[2]))
                     result.append(r)
-                include = pd.concat(result, axis=1).any(axis=1)
+                if mod=='or':
+                    include = pd.concat(result, axis=1).any(axis=1)
+                elif mod=='and':
+                    include = pd.concat(result, axis=1).all(axis=1)
             else:
                 include = pd.Series(True, index=self.market.index)
             # 默认不排除
@@ -40,7 +45,10 @@ class Eval():
                     elif c[0]=='equal':
                         r=(self.market[c[1]].isin(c[2]))
                     result.append(r)
-                exclude = pd.concat(result, axis=1).any(axis=1)
+                if mod=='or':
+                    exclude = pd.concat(result, axis=1).any(axis=1)
+                elif mod=='and':
+                    exclude = pd.concat(result, axis=1).all(axis=1)
             else:
                 exclude = pd.Series(False, index=self.market.index)
             self.market['include'] = include&(~exclude) 
