@@ -62,7 +62,7 @@ class Miner():
             while len(self.gen0.popu.codes)<int(self.population_size/self.evolution_ratio):
                 self.gen0.multiply()
             self.seeds = list(self.gen0.popu.codes)
-    def run(self):
+    def run(self, pooltype='or'):
         workfile = datetime.datetime.now().strftime("%m%d%H%M_%S_%f")+\
                             '_%s'%np.random.rand()
         t0 = time.time()
@@ -82,7 +82,10 @@ class Miner():
         popu0 = GPm.popu.Population(type=self.indtype, fix_ind=self.fixp)
         if self.indtype==GPm.ind.Score:
             eval0 = GPm.eval.Eval(self.market, pool=self.share)
-            eval0.eval_pool()
+            if pooltype=='or':
+                eval0.eval_pool()
+            elif pooltype=='and':
+                eval0.eval_pool(mod='and')
         elif self.indtype==GPm.ind.Pool:
             eval0 = GPm.eval.Eval(self.market, score=self.share)
         else:
@@ -99,14 +102,20 @@ class Miner():
             if self.indtype==GPm.ind.Score:
                 eval0.eval_score(p)
             elif self.indtype==GPm.ind.Pool:
-                eval0.eval_pool(p)
+                if pooltype=='or':
+                    eval0.eval_pool()
+                elif pooltype=='and':
+                    eval0.eval_pool(mod='and')
                 if eval0.market['include'].mean()<1-self.max_extract:
                     result.loc[p, :] = -99999
                     return result
                 eval0.eval_score()
             else:
                 psplit = p.split('&')
-                eval0.eval_pool(psplit[1])
+                if pooltype=='or':
+                    eval0.eval_pool(psplit[1])
+                elif pooltype=='and':
+                    eval0.eval_pool(psplit[1], mod='and')
                 if eval0.market['include'].mean()<1-self.max_extract:
                     result.loc[p, :] = -99999
                     return result
