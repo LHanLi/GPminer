@@ -101,7 +101,6 @@ class Score(Ind):
 # 排除/选取因子（确定策略池子）
 # code：'a<130|b=A,B|c>C'  exp:[[['less', 'a', 130]], [['equal', 'b', ['A', 'B']], ['great', 'c', 'C']] 
 # ;前为include，后为exclude条件, 意为全部a<130的股票中排除掉b为A和B以及c大于C的股票。
-# 不同单因子之间的|表示或还是且取决于self.mod = 'or' or 'and' 
 class Pool(Ind):
     max_exp_len = 10 # 最大因子数
     def code2exp(self):
@@ -187,7 +186,7 @@ class Pool(Ind):
                             unique_exp.append(c)
                     values.append(value)
                 else:
-                    #print('因子相同，操作符不同时，可能表达式代表的是空集，如a<10|a>5则随机去掉一个条件)
+                    #print('因子相同，操作符不同时，可能表达式代表的是全集，如a<10|a>5则随机去掉一个条件)
                     if (factor==prefactor)&(opt!=preopt)&(opt!='equal'):
                         if (((opt=='less')&(value>=prevalue))|((opt=='greater')&(value<=prevalue))):
                             if np.random.rand()<0.5:
@@ -209,10 +208,10 @@ class Pool(Ind):
                     else:
                         values = [value, ]
                         unique_exp.append(c)
-                    # 限制公式最大长度
-                    if len(unique_exp)>self.max_exp_len:
-                        unique_exp = [unique_exp[i] for i in sorted(sample(range(len(unique_exp)), \
-                                                                       self.max_exp_len))]
+            # 限制公式最大长度
+            if len(unique_exp)>self.max_exp_len:
+                unique_exp = [unique_exp[i] for i in sorted(sample(range(len(unique_exp)), \
+                                                               self.max_exp_len))]
             return unique_exp
         self.exp = [unique_c(self.exp[0]), unique_c(self.exp[1])]
     def factors(self):
@@ -249,6 +248,73 @@ class Pool(Ind):
                     new.append([e[0], e[1], small if (big-e[2])>=(e[2]-small) else big])
             return new
         return Pool([a(self.exp[0]), a(self.exp[1])])
+
+# 交集池子
+class Pooland(Pool):
+    def uexp(self):
+        def unique_c(exp):
+            # 先按因子名称排序，再按逻辑符号，再按值
+            def takewsort(one):
+                return [one[1], one[0], str(one[2])]
+            exp.sort(key=takewsort, reverse=True)
+            # 大小于号重叠部分保留，等于重复保留
+            prefactor = ''
+            preopt = ''
+            prevalue = 0
+            unique_exp = []
+            for c in exp:
+                opt = c[0]
+                factor = c[1]
+                value = c[2]
+                #print('因子和操作符都相同时需要考虑合并问题')
+                if (factor==prefactor)&(opt==preopt):
+                    if opt=='equal':  
+                        unique_exp.pop()
+                        if values&set(value):
+                            unique_exp.append([opt, factor, \
+                                            sorted([str(i) for i in list(values&set(value))])])
+                        values = values&set(value)
+                        continue
+                    elif opt=='less':
+                        # 如果集合缩小则更新
+                        if value>values:
+                            continue
+                        else:
+                            unique_exp.pop()
+                            unique_exp.append(c)
+                            values = value
+                    elif opt=='greater':
+                        if value<values:
+                            continue
+                        else:
+                            unique_exp.pop()
+                            unique_exp.append(c)
+                            values = value
+                else:
+                    #print('因子相同，操作符不同时，可能表达式代表的是空集，如a<10|a>20则随机去掉一个条件)
+                    if (factor==prefactor)&(opt!=preopt)&(opt!='equal'):
+                        if (((opt=='less')&(value<=prevalue))|((opt=='greater')&(value>=prevalue))):
+                            if np.random.rand()<0.5:
+                                pass  # 去掉该条件
+                            else:
+                                unique_exp.pop()   # 去掉前一个条件
+                                unique_exp.append(c)
+                            continue
+                    preopt = opt
+                    prefactor = factor
+                    prevalue = value
+                    if opt=='equal':
+                        values = set(value)
+                        unique_exp.append([opt, factor, sorted([str(v) for v in values])])
+                    else:
+                        values = value
+                        unique_exp.append(c)
+            # 限制公式最大长度
+            if len(unique_exp)>self.max_exp_len:
+                unique_exp = [unique_exp[i] for i in sorted(sample(range(len(unique_exp)), \
+                                                               self.max_exp_len))]
+            return unique_exp
+        self.exp = [unique_c(self.exp[0]), unique_c(self.exp[1])]
 
 # 策略类，包含Score和Pool
 # code: Score.code+'&'+Pool.code, exp: [Score.exp, Pool.exp]
