@@ -23,17 +23,12 @@ class Gen():
             self.score_basket = score_basket
             self.pool_basket = pool_basket
         if popu0==None:
-            #if indtype=='Score':
-            #    self.popu = GPm.popu.Population(GPm.ind.Score)
-            #elif indtype=='Pool':
-            #    self.popu = GPm.popu.Population(GPm.ind.Pool)
-            #elif indtype=='SP':
-            #    self.popu = GPm.popu.Population(GPm.ind.SP)
             self.popu = GPm.popu.Population(indtype)
         else:
             self.popu = popu0
         # 初始化pool的参数域，需要输入market
-        if (self.popu.type==GPm.ind.Pool) | (self.popu.type==GPm.ind.SP):
+        if  (self.popu.type==GPm.ind.Pooland) | (self.popu.type==GPm.ind.Pool) |\
+            (self.popu.type==GPm.ind.SP):
             if type(market)==type(None):
                 print('market is needed for Pool ind Gen!')
                 return 
@@ -98,7 +93,8 @@ class Gen():
             return popu0
         if self.popu.type==(GPm.ind.Score):
             return seeds_Score().codes
-        elif self.popu.type==(GPm.ind.Pool):
+        # Pool和Pooland的code/exp是互通的
+        elif  (self.popu.type==GPm.ind.Pooland) | (self.popu.type==(GPm.ind.Pool)):
             return seeds_Pool().codes
         elif self.popu.type==(GPm.ind.SP):
             return set(i[0]+'&'+i[1] for i in zip(seeds_Score().codes, seeds_Pool().codes))
@@ -170,7 +166,7 @@ class Gen():
                 #      ((lambda x: '减小' if x else '增大')(method), mul, d))
             new = GPm.ind.Score(exp)
             return new
-        elif type(ind)==GPm.ind.Pool:
+        elif  (type(ind)==GPm.ind.Pooland) | (type(ind)==GPm.ind.Pool):
             # 等概率选择变异include或exclude部分（除非他们为空）
             if (len(exp[0])!=0)&((np.random.rand()<0.5)|(len(exp[1])==0)):
                 select_inexlude = 0
@@ -203,7 +199,7 @@ class Gen():
                         exp[select_inexlude][select_loc][2] = larger_value[0]
                     else:
                         exp[select_inexlude][select_loc][2] = less_value[-1]
-            new = GPm.ind.Pool(exp)
+            new = type(ind)(exp)
             return new
         elif type(ind)==GPm.ind.SP:
             # 随机选打分因子/排除因子变异
@@ -233,7 +229,7 @@ class Gen():
                              exp[random_select0][2]])
             new = GPm.ind.Score(exp)
             return new
-        elif type(ind)==GPm.ind.Pool:
+        elif (type(ind)==GPm.ind.Pooland) | (type(ind)==GPm.ind.Pool):
             def expand(exp):
                 exp = copy.deepcopy(exp)
                 if (np.random.rand()>0.5)&(len(exp)!=1):
@@ -255,7 +251,7 @@ class Gen():
                     exp = [expand(exp[0]), exp[1]]
                 else:
                     exp = [exp[0], expand(exp[1])]
-            new = GPm.ind.Pool(exp)
+            new = self.popu.type(exp)
             return new
         elif type(ind)==GPm.ind.SP:
             # 随机选打分因子/排除因子变异
@@ -282,7 +278,7 @@ class Gen():
                 random_select = np.random.randint(len(self.score_basket))
             exp[random_select0][0] = self.score_basket[random_select]
             return GPm.ind.Score(exp)
-        elif type(ind)==GPm.ind.Pool:
+        elif (type(ind)==GPm.ind.Pooland) | (type(ind)==GPm.ind.Pool):
             # 删一个加一个
             def expreplace(exp):
                 exp.pop()
@@ -304,7 +300,7 @@ class Gen():
                     exp = [[], expreplace(exp[1])]
                 else:
                     exp = [expreplace(exp[1]), []]
-            return GPm.ind.Pool(exp)
+            return type(ind)(exp)
         else:
             # 随机选打分因子/排除因子变异
             if np.random.rand()<0.5:
