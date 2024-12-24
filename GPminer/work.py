@@ -39,7 +39,7 @@ class Miner():
         self.fixp = fixp
     def prepare(self, fitness='sharpe',\
                  population_size=10, evolution_ratio=0.2, tolerance_g=3, max_g=10,\
-                  prob_dict={}, select_alg='cut', n_core=4):
+                  prob_dict={}, select_alg='cut', n_core=4, exclude=True):
         self.fitness = fitness
         self.population_size = population_size
         self.evolution_ratio = evolution_ratio
@@ -53,7 +53,7 @@ class Miner():
         self.gen0 = GPm.gen.Gen(score_basket=self.score_basket, pool_basket=self.pool_basket,\
                             market=self.market, indtype=self.indtype, popu0=popu0)
         if type(self.p0)==type(None):
-            self.seeds = list(self.gen0.get_seeds())
+            self.seeds = list(self.gen0.get_seeds(exclude=exclude))
         else:
             if type(self.p0)==type(set()):
                 self.gen0.popu.add(self.p0)
