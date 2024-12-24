@@ -98,7 +98,7 @@ class Miner():
         def single(p):
             result = pd.DataFrame(columns=['return_total', 'return_annual', 'excess_annual',\
                     'sharpe', 'excess_sharpe', 'drawdown', 'excess_drawdown', \
-                    'sigma', 'excess_sigma', 'beta', 'alpha'])
+                    'sigma', 'excess_sigma', 'beta', 'alpha', 'extract_ratio'])
             if self.indtype==GPm.ind.Score:
                 eval0.eval_score(p)
             elif (self.indtype==GPm.ind.Pool) | (self.indtype==GPm.ind.Pooland):
@@ -108,6 +108,7 @@ class Miner():
                     eval0.eval_pool(p, mod='and')
                 if eval0.market['include'].mean()<1-self.max_extract:
                     result.loc[p, :] = -99999
+                    result.loc[p, 'extract_ratio'] = 1-eval0.market['include'].mean()
                     return result
                 eval0.eval_score()
             else:
@@ -134,6 +135,7 @@ class Miner():
             result.loc[p, 'excess_sigma'] = -post0.excess_sigma
             result.loc[p, 'beta'] = post0.beta
             result.loc[p, 'alpha'] = post0.alpha*250*100
+            result.loc[p, 'extract_ratio'] = 1-eval0.market['include'].mean()
             return result
         max_fitness = -99999
         max_loc = 0
@@ -178,11 +180,10 @@ class Miner():
                 fitness_df.loc[list(popu0.codes)].sort_values(by=self.fitness, ascending=False).\
                     to_csv(workfile+'/fitness%s.csv'%(g+1))
                 # 重命名结果
-                os.rename(workfile, 'result-'+popu0.get_name()+'-'+workfile)
+                os.rename(workfile, 'result-'+fitness_df.index[0]+'-'+workfile)
                 break
             # 种群繁殖
             gen0.multiply(1/self.evolution_ratio)
             GPm.ino.log('交叉变异生成第%s代种群'%(g+1))
 
 
-            
