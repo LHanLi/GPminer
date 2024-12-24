@@ -181,7 +181,7 @@ class Miner():
                     to_csv(workfile+'/fitness%s.csv'%(g+1))
                 # 重命名结果
                 os.rename(workfile, 'result-'+\
-                    fitness_df.index[0].replace('>','_bigger_').replace('<', '_smaller_').replace('|', '或')\
+                    fitness_df.index[0].replace('>','_bigger_').replace('<', '_smaller_').replace('|', '或').replace('*','_mul_')\
                     +'-'+workfile)
                 break
             # 种群繁殖
