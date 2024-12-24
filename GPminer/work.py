@@ -180,7 +180,9 @@ class Miner():
                 fitness_df.loc[list(popu0.codes)].sort_values(by=self.fitness, ascending=False).\
                     to_csv(workfile+'/fitness%s.csv'%(g+1))
                 # 重命名结果
-                os.rename(workfile, 'result-'+fitness_df.index[0]+'-'+workfile)
+                os.rename(workfile, 'result-'+\
+                    fitness_df.index[0].replace('>','_bigger_').replace('<', '_smaller_').replace('|', '或')\
+                    +'-'+workfile)
                 break
             # 种群繁殖
             gen0.multiply(1/self.evolution_ratio)
