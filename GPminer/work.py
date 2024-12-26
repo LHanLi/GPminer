@@ -59,7 +59,8 @@ class Miner():
                 self.gen0.popu.add(self.p0)
             else:
                 self.gen0.popu.add(self.p0.code)
-            while len(self.gen0.popu.codes)<int(self.population_size/self.evolution_ratio):
+            #while len(self.gen0.popu.codes)<int(self.population_size/self.evolution_ratio):
+            while len(self.gen0.popu.codes)<int(10*self.population_size):
                 self.gen0.multiply()
             self.seeds = list(self.gen0.popu.codes)
     def run(self, pooltype='or'):
@@ -67,11 +68,15 @@ class Miner():
                             '_%s'%np.random.rand()
         t0 = time.time()
         if type(self.p0)==type(None):
-            init_seeds = sample(self.seeds, int(self.population_size/self.evolution_ratio))
+            #init_seeds = sample(self.seeds, int(self.population_size/self.evolution_ratio))
+            init_seeds = sample(self.seeds, int(self.population_size))
         elif type(self.p0)==type(set()):
-            init_seeds = set(sample(self.seeds, int(self.population_size/self.evolution_ratio)))
+            #init_seeds = set(sample(self.seeds, int(self.population_size/self.evolution_ratio)))
+            init_seeds = set(sample(self.seeds, int(self.population_size)))
         else:
-            init_seeds = set(sample(self.seeds, int(self.population_size/self.evolution_ratio)-1))|\
+            #init_seeds = set(sample(self.seeds, int(self.population_size/self.evolution_ratio)-1))|\
+            #        {self.p0.code}
+            init_seeds = set(sample(self.seeds, int(self.population_size)-1))|\
                     {self.p0.code}
         GPm.ino.log('生成%s个p作为初始种群'%len(init_seeds))
         GPm.ino.log('=====此初始种群进化开始=====')
