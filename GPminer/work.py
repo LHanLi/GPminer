@@ -39,7 +39,7 @@ class Miner():
         self.fixp = fixp
     def prepare(self, fitness='sharpe',\
                  population_size=10, evolution_ratio=0.2, tolerance_g=3, max_g=10,\
-                  prob_dict={}, select_alg='cut', n_core=4):
+                  prob_dict={}, select_alg='cut', n_core=4, exclude=True):
         self.fitness = fitness
         self.population_size = population_size
         self.evolution_ratio = evolution_ratio
@@ -53,13 +53,14 @@ class Miner():
         self.gen0 = GPm.gen.Gen(score_basket=self.score_basket, pool_basket=self.pool_basket,\
                             market=self.market, indtype=self.indtype, popu0=popu0)
         if type(self.p0)==type(None):
-            self.seeds = list(self.gen0.get_seeds())
+            self.seeds = list(self.gen0.get_seeds(exclude=exclude))
         else:
             if type(self.p0)==type(set()):
                 self.gen0.popu.add(self.p0)
             else:
                 self.gen0.popu.add(self.p0.code)
-            while len(self.gen0.popu.codes)<int(self.population_size/self.evolution_ratio):
+            #while len(self.gen0.popu.codes)<int(self.population_size/self.evolution_ratio):
+            while len(self.gen0.popu.codes)<int(10*self.population_size):
                 self.gen0.multiply()
             self.seeds = list(self.gen0.popu.codes)
     def run(self, pooltype='or'):
@@ -67,11 +68,15 @@ class Miner():
                             '_%s'%np.random.rand()
         t0 = time.time()
         if type(self.p0)==type(None):
-            init_seeds = sample(self.seeds, int(self.population_size/self.evolution_ratio))
+            #init_seeds = sample(self.seeds, int(self.population_size/self.evolution_ratio))
+            init_seeds = sample(self.seeds, int(self.population_size))
         elif type(self.p0)==type(set()):
-            init_seeds = set(sample(self.seeds, int(self.population_size/self.evolution_ratio)))
+            #init_seeds = set(sample(self.seeds, int(self.population_size/self.evolution_ratio)))
+            init_seeds = set(sample(self.seeds, int(self.population_size)))
         else:
-            init_seeds = set(sample(self.seeds, int(self.population_size/self.evolution_ratio)-1))|\
+            #init_seeds = set(sample(self.seeds, int(self.population_size/self.evolution_ratio)-1))|\
+            #        {self.p0.code}
+            init_seeds = set(sample(self.seeds, int(self.population_size)-1))|\
                     {self.p0.code}
         GPm.ino.log('生成%s个p作为初始种群'%len(init_seeds))
         GPm.ino.log('=====此初始种群进化开始=====')
@@ -98,7 +103,7 @@ class Miner():
         def single(p):
             result = pd.DataFrame(columns=['return_total', 'return_annual', 'excess_annual',\
                     'sharpe', 'excess_sharpe', 'drawdown', 'excess_drawdown', \
-                    'sigma', 'excess_sigma', 'beta', 'alpha'])
+                    'sigma', 'excess_sigma', 'beta', 'alpha', 'extract_ratio'])
             if self.indtype==GPm.ind.Score:
                 eval0.eval_score(p)
             elif (self.indtype==GPm.ind.Pool) | (self.indtype==GPm.ind.Pooland):
@@ -108,6 +113,7 @@ class Miner():
                     eval0.eval_pool(p, mod='and')
                 if eval0.market['include'].mean()<1-self.max_extract:
                     result.loc[p, :] = -99999
+                    result.loc[p, 'extract_ratio'] = 1-eval0.market['include'].mean()
                     return result
                 eval0.eval_score()
             else:
@@ -134,6 +140,7 @@ class Miner():
             result.loc[p, 'excess_sigma'] = -post0.excess_sigma
             result.loc[p, 'beta'] = post0.beta
             result.loc[p, 'alpha'] = post0.alpha*250*100
+            result.loc[p, 'extract_ratio'] = 1-eval0.market['include'].mean()
             return result
         max_fitness = -99999
         max_loc = 0
@@ -178,11 +185,12 @@ class Miner():
                 fitness_df.loc[list(popu0.codes)].sort_values(by=self.fitness, ascending=False).\
                     to_csv(workfile+'/fitness%s.csv'%(g+1))
                 # 重命名结果
-                os.rename(workfile, 'result-'+popu0.get_name()+'-'+workfile)
+                os.rename(workfile, 'result-'+\
+                    fitness_df.index[0].replace('>','_bigger_').replace('<', '_smaller_').replace('|', '或').replace('*','_mul_')\
+                    +'-'+workfile)
                 break
             # 种群繁殖
             gen0.multiply(1/self.evolution_ratio)
             GPm.ino.log('交叉变异生成第%s代种群'%(g+1))
 
 
-            
