@@ -76,10 +76,10 @@ class Eval():
         self.market['score'] = self.market[basescore].sum(axis=1)
         #ino.log('获取打分耗时', time.time()-time0)
         #time0 = time.time()
-    def backtest(self, hold_num, price, code_returns=None):
+    def backtest(self, hold_num, price, code_returns=None, interval=1):
         # 回测
         strat0 = FB.strat.MetaStrat(self.market, 'include', 'score',\
-                    hold_num, price, code_returns=code_returns)
+                    hold_num, price, interval=interval, code_returns=code_returns)
         strat0.run()
         return strat0
 
