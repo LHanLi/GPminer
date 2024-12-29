@@ -97,6 +97,8 @@ class Score(Ind):
         # 再比较权重数字大小
         ws = sum([float(i.split('*')[0]) for i in s0.split('+')]) 
         return 1e5*ns+ws 
+    def short(self):
+        return ','.join([i[0] for i in self.exp])
 
 # 排除/选取因子（确定策略池子）
 # code：'a<130|b=A,B|c>C'  exp:[[['less', 'a', 130]], [['equal', 'b', ['A', 'B']], ['great', 'c', 'C']] 
@@ -248,6 +250,9 @@ class Pool(Ind):
                     new.append([e[0], e[1], small if (big-e[2])>=(e[2]-small) else big])
             return new
         return Pool([a(self.exp[0]), a(self.exp[1])])
+    def short(self):
+        return ','.join([i[1] for i in self.exp[0]])+\
+                    ';'+','.join([i[1] for i in self.exp[1]])
 
 # 交集池子
 class Pooland(Pool):
@@ -336,4 +341,5 @@ class SP(Ind):
         self.code = self.score.code+'&'+self.pool.code
     def factors(self):
         return self.score.factors().add(self.pool.factors(), fill_value=0).sort_values(ascending=False)
-
+    def short(self):
+        return self.score.short()+'&'+self.pool.short()
