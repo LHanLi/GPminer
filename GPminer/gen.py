@@ -40,8 +40,8 @@ class Gen():
                     if len(market[factor].unique())>divide_n:
                         self.para_space[factor] = (False, [market[factor].quantile(i) \
                                     for i in np.linspace(0.01,0.99,divide_n)]) 
-                    else:
-                        self.para_space[factor] = (False, sorted(market[factor].unique())) 
+                    else:  # 最大最小值去除
+                        self.para_space[factor] = (False, sorted(market[factor].unique())[1:-1]) 
                 else:
                     self.para_space[factor] = (True, list(market[factor].unique())) 
     # 从basket中因子获得popu
