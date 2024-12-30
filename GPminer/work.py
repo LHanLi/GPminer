@@ -167,16 +167,17 @@ class Miner():
                 max_loc = g
             fitness_df.to_csv(workfile+'/fitness%s.csv'%g)
             # 选择
-            if self.select_alg=='cut':
-                popu0.reset(set(fitness_df[:self.population_size].index)) # 截断选择
-            # 锦标赛，不放回
-            elif self.select_alg=='tournament':
-                select = set()
-                while len(select)<self.population_size:
-                    one = set(fitness_df.loc[sample(list(set(fitness_df.index)-select), int(len(fitness_df)/10))]\
-                                .sort_values(by=self.fitness, ascending=False).index[:1])
-                    select = select|one
-                popu0.reset(select)
+            if g!=0:
+                if self.select_alg=='cut':
+                    popu0.reset(set(fitness_df[:self.population_size].index)) # 截断选择
+                # 锦标赛，不放回
+                elif self.select_alg=='tournament':
+                    select = set()
+                    while len(select)<self.population_size:
+                        one = set(fitness_df.loc[sample(list(set(fitness_df.index)-select), int(len(fitness_df)/10))]\
+                                    .sort_values(by=self.fitness, ascending=False).index[:1])
+                        select = select|one
+                    popu0.reset(select)
             GPm.ino.log('第%s轮进化完成，最大%s:%.2lf'%(g, self.fitness, fitness_df.iloc[0][self.fitness]))
             if ((g-max_loc)>=self.tolerance_g)|(g>=(self.max_g-1)):
                 cost = time.time()-t0
