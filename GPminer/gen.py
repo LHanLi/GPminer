@@ -106,7 +106,7 @@ class Gen():
             if len(exp)==1:
                 return ind
             random_select = np.random.randint(len(exp)) 
-            #print('选择变异第%s个因子权重'%random_select)
+            GPm.ino.log('选择变异%s第%s个因子权重'%(ind.code, random_select))
             deltawmax = 0.1 # 权重改变幅度小于此阈值   # 声明常数 constant
             deltawmin = 0.02 # 权重改变幅度大于此阈值
             max_step = 100 # 寻找新权重组合最大尝试次数
