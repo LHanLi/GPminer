@@ -80,6 +80,8 @@ class Factor():
         # 成交流动性   vol
         elif key=='Amihud':  # 流动性
             self.market[code] = self.cal_factor('Ret')/self.cal_factor('amount')
+        elif key=='UnusualVol':    # 异常成交量  UnusualVol.d
+            self.market[code] = self.cal_factor('vol')/self.cal_factor('vol_MA_'+para[0])
         # 技术形态  kbars
         elif key=='MACD':   #  MACD.d.d.d 
             EMAslow = FB.my_pd.cal_ts(self.cal_factor('ex_close'), 'EMA', int(para[1])) 
@@ -103,8 +105,6 @@ class Factor():
             self.market[code] = (FB.my_pd.cal_ts((deltax*deltay), 'Sum', int(para[0]))/\
                     (np.sqrt(FB.my_pd.cal_ts(deltax**2, 'Sum', int(para[0])))*\
                      np.sqrt(FB.my_pd.cal_ts(deltay**2, 'Sum', int(para[0]))))).fillna(0)
-        elif key=='UnusualVol':    # 异常成交量  UnusualVol.d
-            self.market[code] = self.cal_factor('vol')/self.cal_factor('vol_MA_'+para[0])
         # 金融学理论   model        
         elif key=='beta':    # CAMP理论 beta/alpha/estd  beta.d
             # 计算市场平均收益
