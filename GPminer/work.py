@@ -87,10 +87,7 @@ class Miner():
         popu0 = GPm.popu.Population(type=self.indtype, fix_ind=self.fixp)
         if self.indtype==GPm.ind.Score:
             eval0 = GPm.eval.Eval(self.market, pool=self.share)
-            if pooltype=='or':
-                eval0.eval_pool()
-            elif pooltype=='and':
-                eval0.eval_pool(mod='and')
+            eval0.eval_pool(mod=pooltype) 
         elif self.indtype==GPm.ind.Pool:
             eval0 = GPm.eval.Eval(self.market, score=self.share)
         else:
