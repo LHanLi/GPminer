@@ -9,8 +9,10 @@ import FreeBack as FB
 # factor: 基础因子名， 如果有参数，用.分割
 # method：时序算符, period: 时序算符周期
 class Factor():
-    def __init__(self, market):
+    # type: stock/bond/future/crypto
+    def __init__(self, market, type='stock'):
         self.market = market
+        self.type = type
         for i in ['close', 'open', 'high', 'low', 'pre_close', 'amount', 'vol']:
             if i not in market.columns:
                 raise ValueError("value must include %s"%i)
@@ -21,6 +23,7 @@ class Factor():
         if code in self.market.columns:
             return self.market[code]
         else:
+            # 因子分解为基础因子名和时序运算符
             exp = code.split('-')
             if len(exp)==1:  # 基础因子
                 self.cal_basic_factor(code)
@@ -30,13 +33,16 @@ class Factor():
     # 计算/引用基础因子
     def cal_basic_factor(self, code):
         if code in self.market.columns:
-             return         # 如果因子存在则不计算
+            return self.market[code]      # 如果因子存在则不计算
+        # 因子分解为因子名和参数
         code_split = code.split('.')
         key = code_split[0]
         para = code_split[1:]
         if key=='exfactor':    # 复权因子
             exfactor = self.cal_factor('close').groupby('code').shift()/self.cal_factor('pre_close')
             self.market[code] = exfactor.groupby('code').cumprod()
+        # 基本面因子
+        elif key in ['PriceLimit', '']
         # 量价基础 basic
         elif key in ['ex_close', 'ex_open', 'ex_high', 'ex_low']:
             self.market[code] = self.cal_factor(code[3:])*self.cal_factor('exfactor')
