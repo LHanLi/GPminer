@@ -8,7 +8,7 @@ import time
 
 class Eval():
     def __init__(self, market, pool=None, score=None):
-        self.market = market
+        self.market = market.copy()
         self.pool = pool
         self.score = score
     def eval_pool(self, poolcode=None, mod='or'):
