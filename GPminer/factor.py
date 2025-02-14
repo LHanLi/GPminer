@@ -197,32 +197,28 @@ class Factor():
         elif key=='freeCap':
              self.market[code] = self.cal_factor('free_float_shares')*self.cal_factor('close')/1e8
         ##############################################################################
-        ################################ 量价因子 ##################################
+        ################################ 价格因子 price ##############################
         ##############################################################################
         elif key=='vwap': 
             self.market[code] = (self.cal_factor('amount')/self.cal_factor('vol')).fillna(self.market['close'])
-        
-        
-        
         elif key=='exfactor':    # 复权因子
             exfactor = self.cal_factor('close').groupby('code').shift()/self.cal_factor('pre_close')
             self.market[code] = exfactor.groupby('code').cumprod()
-        # 量价基础 basic
         elif key in ['ex_close', 'ex_open', 'ex_high', 'ex_low']:
             self.market[code] = self.cal_factor(code[3:])*self.cal_factor('exfactor')
-        elif key=='vwap':     
-            self.market[code] = self.cal_factor('amount')/self.cal_factor('vol')
-        # 动量反转  mom
+        ##############################################################################
+        ############################## 动量反转 mom ##################################
+        ##############################################################################
         elif key=='Ret':      
             self.market[code] = self.cal_factor('close')/self.cal_factor('pre_close')
-        elif key=='nightRet':     # 隔夜收益（开盘跳空
-            self.market[code] = self.cal_factor('open')/self.cal_factor('pre_close')-1
-        elif key=='T0Ret':
-            self.market['T0Ret'] = self.cal_factor('close')/self.cal_factor('open')-1
-        elif key=='maxRet':
-            self.market['maxRet'] = self.cal_factor('high')/self.cal_factor('low')-1
-        elif key=='bodyRatio':   # k线实体占比
-            self.market[code] = abs(self.cal_factor('close')-self.cal_factor('open'))/(self.cal_factor('high')-self.cal_factor('low'))
+        elif key=='deviation':         # deviation.d  d日均线乖离率
+            self.market[code] = self.cal_factor('ex_close')/self.cal_factor('ex_close-MA-%s'%para[0])
+        elif key=='DrawDown':        # 唐奇安通道 上轨距离   DrawDown.d
+            max_c = FB.my_pd.cal_ts(self.cal_factor('ex_high'), 'Max', int(para[0]))
+            self.market[code] = self.cal_factor('ex_close')/min_c-1 
+        elif key=='DrawUp':   # 唐奇安通道 下轨距离  DrawUp.d
+            min_c = FB.my_pd.cal_ts(self.cal_factor('ex_low'), 'Min', int(para[0]))
+            self.market[code] = 1-self.cal_factor('ex_close')/max_c
         elif key=='RSI':     
             up = pd.Series(np.where(self.cal_factor('Ret')>0, self.cal_factor('Ret'), 0), \
                            index=self.market.index)
@@ -231,13 +227,21 @@ class Factor():
             sumup = FB.my_pd.cal_ts(up, 'Sum', int(para[0]))
             sumdown = FB.my_pd.cal_ts(down, 'Sum', int(para[0]))
             rsi = sumup/(sumup+sumdown)
-            self.market[code] = rsi
-        elif key=='DrawDown':        # 唐奇安通道 上轨距离   DrawDown.d
-            max_c = FB.my_pd.cal_ts(self.cal_factor('ex_high'), 'Max', int(para[0]))
-            self.market[code] = self.cal_factor('ex_close')/min_c-1 
-        elif key=='DrawUp':   # 唐奇安通道 下轨距离  DrawUp.d
-            min_c = FB.my_pd.cal_ts(self.cal_factor('ex_low'), 'Min', int(para[0]))
-            self.market[code] = 1-self.cal_factor('ex_close')/max_c
+            self.market[code] = rsi 
+        ##############################################################################
+        ############################## 波动率 volatility ##################################
+        ##############################################################################
+        
+        
+        elif key=='nightRet':     # 隔夜收益（开盘跳空
+            self.market[code] = self.cal_factor('open')/self.cal_factor('pre_close')-1
+        elif key=='T0Ret':
+            self.market['T0Ret'] = self.cal_factor('close')/self.cal_factor('open')-1
+        elif key=='maxRet':
+            self.market['maxRet'] = self.cal_factor('high')/self.cal_factor('low')-1
+        elif key=='bodyRatio':   # k线实体占比
+            self.market[code] = abs(self.cal_factor('close')-self.cal_factor('open'))/(self.cal_factor('high')-self.cal_factor('low'))
+
         # 波动率  volatility
         elif key=='AMP':   # 振幅   AMP.d
             exhigh_Max = FB.my_pd.cal_ts(self.cal_factor('ex_high'), 'Max', int(para[0]))
