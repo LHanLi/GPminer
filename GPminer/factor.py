@@ -109,6 +109,16 @@ class Factor():
             days[code] = ((days['date']-days['anndate']).dt.days+1).fillna(999)
             self.market[code] = days.set_index(['date', 'code'])[code]
         elif key=='tradedays':
+<<<<<<< HEAD
+=======
+            alltradeday = df.index.get_level_values(0).unique()
+            def count_tradedays(start, end):
+                if (start not in alltradeday)|(end not in alltradeday):
+                    return np.nan
+                start_index = np.searchsorted(alltradeday, start, side='left')
+                end_index = np.searchsorted(alltradeday, end, side='right')
+                return end_index-start_index  # 第一天为1
+>>>>>>> 8d25917e7fa3473d1e3d5dc575182943d028fb06
             dayscode = self.market[self.cal_factor(para[0])][[]].reset_index()
             dayscode['anndate'] = dayscode['date']
             alldayscode = self.market[[]].reset_index()
