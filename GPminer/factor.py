@@ -186,6 +186,9 @@ class Factor():
              self.market[code] = self.cal_factor('float_shares')*self.cal_factor('close')/1e8
         elif key=='freeCap':
              self.market[code] = self.cal_factor('free_float_shares')*self.cal_factor('close')/1e8
+        ##############################################################################
+        ################################ 量价因子 ##################################
+        ##############################################################################
         
         
         
