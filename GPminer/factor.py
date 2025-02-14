@@ -19,18 +19,21 @@ class Factor():
         if 'exfactor' not in market.columns:
             self.cal_factor('exfactor')
     # 计算/引用因子
-    def cal_factor(self, code):
-        if code in self.market.columns:
+    def cal_factor(self, code, ifrecal=False):
+        if (code in self.market.columns)&(not ifrecal):
             return self.market[code]      # 如果因子存在则不计算
         else:
             # 因子分解为基础因子名和时序运算符
             exp = code.split('-')
             if len(exp)==1:  # 基础因子
                 self.cal_basic_factor(code)
-                #return self.market[code] 
             else:  # 时序计算（MA/EMA/Zscore/Max/Min/Std/Sum/rank/quantile/Skew/Kurt/argmin/argmax/prod)
                 self.market[code] = FB.my_pd.cal_ts(self.ref(exp[0]), exp[1], int(exp[2])) 
-                return self.market[code]
+            # 返回计算因子
+            if code in self.market.columns:
+                return self.market[code] 
+            else:
+                print('failed cal')
     # 计算/引用基础因子
     def cal_basic_factor(self, code):
         # 因子分解为因子名和参数
@@ -47,8 +50,9 @@ class Factor():
                     # 开盘收盘：+表示涨停 -表示跌停 0表示正常
                     # 盘中: 0盘中时表示非一直跌停或涨停，+或-表示存在涨停或跌停
                     date = self.market.index.get_level_values(0)
+                    global get_limit
                     if self.type=='stock':
-                        mindelta = 0.001
+                        mindelta = 0.01
                         def get_limit(up=True):  # 获取涨跌幅度限制    简化处理，详细规则见:xueqiu.com/4610950050/276325750
                             return np.select([self.cal_factor('place_sector')=='上交所.科创板', self.cal_factor('place_sector')=='深交所.创业板', self.cal_factor('place_sector')=='北交所.北证'],\
                                     [np.where(self.cal_factor('dur_tradedays')<=5, 999 if up else 1, 0.2),\
@@ -97,8 +101,8 @@ class Factor():
             self.market[code] = self.cal_factor(para[0])
         elif key=='days':   # days.a 距离上次为True天数
             dayscode = self.market[self.cal_factor(para[0])][[]].reset_index()
+            dayscode['anndate'] = dayscode['date']
             alldayscode = self.market[[]].reset_index()
-            days['anndate'] = days['date']
             days = alldayscode.merge(dayscode, on=['date', 'code'], how='left')
             days = days.set_index(['date', 'code']).groupby('code')['anndate'].ffill()
             days = days.reset_index()
@@ -106,13 +110,13 @@ class Factor():
             self.market[code] = days.set_index(['date', 'code'])[code]
         elif key=='tradedays':
             dayscode = self.market[self.cal_factor(para[0])][[]].reset_index()
+            dayscode['anndate'] = dayscode['date']
             alldayscode = self.market[[]].reset_index()
-            days['anndate'] = days['date']
             days = alldayscode.merge(dayscode, on=['date', 'code'], how='left')
             days = days.set_index(['date', 'code']).groupby('code')['anndate'].ffill()
             days = days.reset_index()
             days[code] = np.vectorize(count_tradedays)(days['anndate'], days['date'])
-            self.market[code] = days.set_index(['date', 'code'])[code]
+            self.market[code] = days.set_index(['date', 'code'])[code].fillna(999)
         ##############################################################################
         ########################### 财务数据 finance ##################################
         ##############################################################################
@@ -269,5 +273,5 @@ class Factor():
             pass
         if code not in self.market.columns:
             print('warning! not basic factor %s'%code)
-        else:
-            return self.market[code]
+        #else:
+        #    return self.market[code]
