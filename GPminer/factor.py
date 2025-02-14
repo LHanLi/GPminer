@@ -28,7 +28,7 @@ class Factor():
             if len(exp)==1:  # 基础因子
                 self.cal_basic_factor(code)
             else:  # 时序计算（MA/EMA/Zscore/Max/Min/Std/Sum/rank/quantile/Skew/Kurt/argmin/argmax/prod)
-                self.market[code] = FB.my_pd.cal_ts(self.ref(exp[0]), exp[1], int(exp[2])) 
+                self.market[code] = FB.my_pd.cal_ts(self.cal_factor(exp[0]), exp[1], int(exp[2])) 
             # 返回计算因子
             if code in self.market.columns:
                 return self.market[code] 
@@ -207,9 +207,9 @@ class Factor():
         ############################## 动量反转 mom ##################################
         ##############################################################################
         elif key=='Ret':      
-            self.market[code] = self.cal_factor('close')/self.cal_factor('pre_close')
+            self.market[code] = self.cal_factor('close')/self.cal_factor('pre_close')-1
         elif key=='deviation':         # deviation.d  d日均线乖离率
-            self.market[code] = self.cal_factor('ex_close')/self.cal_factor('ex_close-MA-%s'%para[0])
+            self.market[code] = self.cal_factor('ex_close')/self.cal_factor('ex_close-MA-%s'%para[0])-1
         elif key=='DrawDown':        # 唐奇安通道 上轨距离   DrawDown.d
             max_c = FB.my_pd.cal_ts(self.cal_factor('ex_high'), 'Max', int(para[0]))
             self.market[code] = self.cal_factor('ex_close')/min_c-1 
