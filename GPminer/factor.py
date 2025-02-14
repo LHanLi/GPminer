@@ -102,7 +102,7 @@ class Factor():
             days = days.reset_index()
             days[code] = ((days['date']-days['anndate']).dt.days+1).fillna(999)
             self.market[code] = days.set_index(['date', 'code'])[code]
-        elif key='tradedays':
+        elif key=='tradedays':
             alltradeday = df.index.get_level_values(0).unique()
             def count_tradedays(start, end):
                 if (start not in alltradeday)|(end not in alltradeday):
