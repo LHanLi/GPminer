@@ -47,8 +47,9 @@ class Factor():
                     # 开盘收盘：+表示涨停 -表示跌停 0表示正常
                     # 盘中: 0盘中时表示非一直跌停或涨停，+或-表示存在涨停或跌停
                     date = self.market.index.get_level_values(0)
-                    def get_limit(up=True):  # 获取涨跌幅度限制    简化处理，详细规则见:xueqiu.com/4610950050/276325750
-                        if self.type=='stock':
+                    if self.type=='stock':
+                        mindelta = 0.001
+                        def get_limit(up=True):  # 获取涨跌幅度限制    简化处理，详细规则见:xueqiu.com/4610950050/276325750
                             return np.select([self.cal_factor('place_sector')=='上交所.科创板', self.cal_factor('place_sector')=='深交所.创业板', self.cal_factor('place_sector')=='北交所.北证'],\
                                     [np.where(self.cal_factor('dur_tradedays')<=5, 999 if up else 1, 0.2),\
                                     np.where(date>=pd.to_datetime('2020-8-24'), np.where(self.cal_factor('dur_tradedays')<=5, 999 if up else 1, 0.2),\
@@ -60,12 +61,13 @@ class Factor():
                                         np.where(date>=pd.to_datetime('2023-4-10'), np.where(self.cal_factor('dur_tradedays')<=5, 999 if up else 1, 0.1),\
                                         np.where(date>=pd.to_datetime('2014-1-1'), np.where(self.cal_factor('dur_tradedays')<=5, 0.44 if up else 0.36, 0.1),\
                                             np.where(self.cal_factor('dur_tradedays')==1, 999 if up else 1, 0.1)))))
-                        elif self.type=='bond':
+                    elif self.type=='bond':
+                        mindelta = 0.001
+                        def get_limit(up=True):  # 获取涨跌幅度限制    简化处理，详细规则见:xueqiu.com/4610950050/276325750
                             return np.where(date<=pd.to_datetime('2022-8-1'), 999 if up else 1,\
                                     np.where(self.cal_factor('dur_tradedays')==1, 0.3 if up else 0.433, 0.2))
                     uplimit = get_limit()
                     downlimit = get_limit(False)
-                    mindelta = 0.001
                     ifonceuplimit = self.cal_factor('high')+mindelta>self.cal_factor('pre_close')*(1+uplimit)
                     ifoncedownlimit = self.cal_factor('low')-mindelta<self.cal_factor('pre_close')*(1-downlimit)
                     ifcloseuplimit = self.cal_factor('close')+mindelta>self.cal_factor('pre_close')*(1+uplimit)
@@ -102,7 +104,7 @@ class Factor():
             days = days.reset_index()
             days[code] = ((days['date']-days['anndate']).dt.days+1).fillna(999)
             self.market[code] = days.set_index(['date', 'code'])[code]
-        elif key='tradedays':
+        elif key=='tradedays':
             dayscode = self.market[self.cal_factor(para[0])][[]].reset_index()
             alldayscode = self.market[[]].reset_index()
             days['anndate'] = days['date']
