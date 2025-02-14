@@ -94,7 +94,23 @@ class Factor():
         elif key=='times':   # times.a.d 最近d日公告a的次数 d
             self.market[code] = self.cal_factor(para[0])
         elif key=='days':   # days.a 距离上次为True天数
-            self.market[code] = self.cal_factor(para[0])
+            dayscode = self.market[self.cal_factor(para[0])][[]].reset_index()
+            alldayscode = self.market[[]].reset_index()
+            days['anndate'] = days['date']
+            days = alldayscode.merge(dayscode, on=['date', 'code'], how='left')
+            days = days.set_index(['date', 'code']).groupby('code')['anndate'].ffill()
+            days = days.reset_index()
+            days[code] = ((days['date']-days['anndate']).dt.days+1).fillna(999)
+            self.market[code] = days.set_index(['date', 'code'])[code]
+        elif key='tradedays':
+            dayscode = self.market[self.cal_factor(para[0])][[]].reset_index()
+            alldayscode = self.market[[]].reset_index()
+            days['anndate'] = days['date']
+            days = alldayscode.merge(dayscode, on=['date', 'code'], how='left')
+            days = days.set_index(['date', 'code']).groupby('code')['anndate'].ffill()
+            days = days.reset_index()
+            days[code] = np.vectorize(count_tradedays)(days['anndate'], days['date'])
+            self.market[code] = days.set_index(['date', 'code'])[code]
         ##############################################################################
         ########################### 财务数据 finance ##################################
         ##############################################################################
