@@ -197,39 +197,23 @@ class Factor():
         ################################ 价格因子 price ##############################
         ##############################################################################
         elif key=='vwap': 
-            self.market[code] = (self.cal_factor('amount')/self.cal_factor('vol')).fillna(self.market['close'])
+            self.market[code] = (self.cal_factor('amount')/self.cal_factor('vol')).\
+                fillna(self.market['close'])
         elif key=='exfactor':    # 复权因子
-            exfactor = self.cal_factor('close').groupby('code').shift()/self.cal_factor('pre_close')
+            exfactor = self.cal_factor('close').groupby('code').shift()/\
+                self.cal_factor('pre_close')
             self.market[code] = exfactor.groupby('code').cumprod()
         elif key in ['ex_close', 'ex_open', 'ex_high', 'ex_low']:
             self.market[code] = self.cal_factor(code[3:])*self.cal_factor('exfactor')
         ##############################################################################
-        ############################## 动量反转 mom ##################################
+        ################################ k线形态 kbar ################################
         ##############################################################################
         elif key=='Ret':      
             self.market[code] = self.cal_factor('close')/self.cal_factor('pre_close')-1
-        elif key=='deviation':         # deviation.d  d日均线乖离率
-            self.market[code] = self.cal_factor('ex_close')/self.cal_factor('ex_close-MA-%s'%para[0])-1
-        elif key=='DrawDown':        # 唐奇安通道 上轨距离   DrawDown.d
-            max_c = FB.my_pd.cal_ts(self.cal_factor('ex_high'), 'Max', int(para[0]))
-            self.market[code] = self.cal_factor('ex_close')/min_c-1 
-        elif key=='DrawUp':   # 唐奇安通道 下轨距离  DrawUp.d
-            min_c = FB.my_pd.cal_ts(self.cal_factor('ex_low'), 'Min', int(para[0]))
-            self.market[code] = 1-self.cal_factor('ex_close')/max_c
-        elif key=='RSI':     
-            up = pd.Series(np.where(self.cal_factor('Ret')>0, self.cal_factor('Ret'), 0), \
-                           index=self.market.index)
-            down = pd.Series(np.where(self.cal_factor('Ret')<0, -self.cal_factor('Ret'), 0), \
-                             index=self.market.index)
-            sumup = FB.my_pd.cal_ts(up, 'Sum', int(para[0]))
-            sumdown = FB.my_pd.cal_ts(down, 'Sum', int(para[0]))
-            rsi = sumup/(sumup+sumdown)
-            self.market[code] = rsi 
-        ##############################################################################
-        ############################## 波动率 volatility ##################################
-        ##############################################################################
-        
-        
+        elif key=='highRet':     
+            self.market[code] = self.cal_factor('high')/self.cal_factor('pre_close')-1
+        elif key=='lowRet':     
+            self.market[code] = self.cal_factor('low')/self.cal_factor('pre_close')-1
         elif key=='nightRet':     # 隔夜收益（开盘跳空
             self.market[code] = self.cal_factor('open')/self.cal_factor('pre_close')-1
         elif key=='T0Ret':
@@ -237,9 +221,48 @@ class Factor():
         elif key=='maxRet':
             self.market['maxRet'] = self.cal_factor('high')/self.cal_factor('low')-1
         elif key=='bodyRatio':   # k线实体占比
-            self.market[code] = abs(self.cal_factor('close')-self.cal_factor('open'))/(self.cal_factor('high')-self.cal_factor('low'))
-
-        # 波动率  volatility
+            self.market[code] = abs(self.cal_factor('close')-self.cal_factor('open'))/\
+                (self.cal_factor('high')-self.cal_factor('low'))
+        elif key=='oc2hl':   # 开收重心到低高重心变动
+            self.market[code] = (self.cal_factor('high')+self.cal_factor('low'))/\
+                (self.cal_factor('open')+self.cal_factor('close')) 
+        elif key=='MACD':   #  MACD.d.d.d 
+            EMAslow = FB.my_pd.cal_ts(self.cal_factor('ex_close'), 'EMA', int(para[1])) 
+            EMAfast = FB.my_pd.cal_ts(self.cal_factor('ex_close'), 'EMA', int(para[0]))
+            DIF = EMAfast-EMAslow
+            DEM = FB.my_pd.cal_ts(DIF, 'EMA', int(para[2]))
+            self.market[code] = DIF-DEM
+        elif key=='RSI':    # RSI.d  d日RSI 
+            up = pd.Series(np.where(self.cal_factor('Ret')>0, self.cal_factor('Ret'), 0), \
+                           index=self.market.index)
+            down = pd.Series(np.where(self.cal_factor('Ret')<0, -self.cal_factor('Ret'), 0), \
+                             index=self.market.index)
+            sumup = FB.my_pd.cal_ts(up, 'Sum', int(para[0]))
+            sumdown = FB.my_pd.cal_ts(down, 'Sum', int(para[0]))
+            rsi = sumup/(sumup+sumdown)
+            self.market[code] = rsi
+        elif key=='RSRS':        # high/low 回归斜率  RSRS.d
+            deltax = self.cal_factor('ex_low')-FB.my_pd.cal_ts(self.cal_factor('ex_low'), \
+                                                                'MA', int(para[0]))
+            deltay = self.cal_factor('ex_high')-FB.my_pd.cal_ts(self.cal_factor('ex_high'), \
+                                                            'MA', int(para[0]))
+            self.market[code] = FB.my_pd.cal_ts(deltax*deltay, 'Sum', \
+                            int(para[0]))/FB.my_pd.cal_ts(deltax**2, 'Sum', int(para[0])) 
+        ##############################################################################
+        ########h##################### 动量反转 mom ##################################
+        ##############################################################################
+        elif key=='deviation':         # deviation.d  d日均线乖离率
+            self.market[code] = self.cal_factor('ex_close')/\
+                self.cal_factor('ex_close-MA-%s'%para[0])-1
+        elif key=='DrawDown':        # 唐奇安通道 上轨距离   DrawDown.d
+            max_c = FB.my_pd.cal_ts(self.cal_factor('ex_high'), 'Max', int(para[0]))
+            self.market[code] = 1-self.cal_factor('ex_close')/max_c
+        elif key=='DrawUp':   # 唐奇安通道 下轨距离  DrawUp.d
+            min_c = FB.my_pd.cal_ts(self.cal_factor('ex_low'), 'Min', int(para[0]))
+            self.market[code] = self.cal_factor('ex_close')/min_c-1 
+        ##############################################################################
+        ########################### 波动率 volatility ################################
+        ##############################################################################
         elif key=='AMP':   # 振幅   AMP.d
             exhigh_Max = FB.my_pd.cal_ts(self.cal_factor('ex_high'), 'Max', int(para[0]))
             exlow_Min = FB.my_pd.cal_ts(self.cal_factor('ex_low'), 'Min', int(para[0]))
@@ -248,23 +271,30 @@ class Factor():
             self.market[code] = pd.concat([self.cal_factor('high')-self.cal_factor('low'),\
                 abs(self.cal_factor('pre_close')-self.cal_factor('high')), \
                 abs(self.cal_factor('pre_close')-self.cal_factor('low'))], axis=1).max(axis=1) 
-        # 成交流动性   vol
+        elif key=='UpTimes':      # UpTimes.a.d 过去d日涨幅超过a%天数
+            self.market[code] = FB.my_pd.cal_ts((self.cal_factor('highRet')>float(para[0])/100),\
+                                        'Sum', int(para[1]))
+        elif key=='DownTimes':      # *.a.d 过去d日最大跌幅超过a%天数
+            self.market[code] = FB.my_pd.cal_ts((self.cal_factor('lowRet')<float(para[0])/100),\
+                                        'Sum', int(para[1]))
+        elif key=='ampTimes':      # *.a.d 过去d日最大波动超过a%天数
+            self.market[code] = FB.my_pd.cal_ts(self.cal_factor('maxRet')>float(para[0]),\
+                                        'Sum', int(para[1]))
+        elif key=='LimitTimes':      # LimitTimes.d d日涨跌停天数
+            self.market[code] = FB.my_pd.cal_ts(self.cal_factor('PriceLimit').\
+                    map(lambda x: ('+' in x)|('-' in x)), 'Sum', int(para[0]))
+        ##############################################################################
+        ######################## 交易活跃度、流动性 volhot #############################
+        ##############################################################################
+        elif key=='turnover':  
+            self.market[code] = self.cal_factor('vol')/self.cal_factor('free_float_shares')
         elif key=='Amihud':  # 流动性
             self.market[code] = self.cal_factor('Ret')/self.cal_factor('amount')
         elif key=='UnusualVol':    # 异常成交量  UnusualVol.d
-            self.market[code] = self.cal_factor('vol')/self.cal_factor('vol_MA_'+para[0])
-        # 技术形态  kbars
-        elif key=='MACD':   #  MACD.d.d.d 
-            EMAslow = FB.my_pd.cal_ts(self.cal_factor('ex_close'), 'EMA', int(para[1])) 
-            EMAfast = FB.my_pd.cal_ts(self.cal_factor('ex_close'), 'EMA', int(para[0]))
-            DIF = EMAfast-EMAslow
-            DEM = FB.my_pd.cal_ts(DIF, 'EMA', int(para[2]))
-            self.market[code] = DIF-DEM
-        elif key=='RSRS':        # high/low 回归斜率  RSRS.d
-            deltax = self.cal_factor('ex_low')-FB.my_pd.cal_ts(self.cal_factor('ex_low'), 'MA', int(para[0]))
-            deltay = self.cal_factor('ex_high')-FB.my_pd.cal_ts(self.cal_factor('ex_high'), 'MA', int(para[0]))
-            self.market[code] = FB.my_pd.cal_ts(deltax*deltay, 'Sum', int(para[0]))/FB.my_pd.cal_ts(deltax**2, 'Sum', int(para[0])) 
-        # 量价相关  composite
+            self.market[code] = self.cal_factor('vol')/self.cal_factor('vol-MA-'+para[0])-1
+        ##############################################################################
+        ################################ 量价相关 corr ################################
+        ##############################################################################
         elif key in ['VolVWAPCorr', 'VolAMPCorr', 'VolRetCorr']:  # 量价相关性   VolPriceCorr.d
             deltax = self.cal_factor('vol')-FB.my_pd.cal_ts(self.cal_factor('vol'), 'MA', int(para[0]))
             if key=='VolVWAPCorr':            
@@ -276,17 +306,18 @@ class Factor():
             self.market[code] = (FB.my_pd.cal_ts((deltax*deltay), 'Sum', int(para[0]))/\
                     (np.sqrt(FB.my_pd.cal_ts(deltax**2, 'Sum', int(para[0])))*\
                      np.sqrt(FB.my_pd.cal_ts(deltay**2, 'Sum', int(para[0]))))).fillna(0)
-        # 金融学理论   model        
+        ##############################################################################
+        ############################# 经济学理论 model ################################
+        ##############################################################################
         elif key=='beta':    # CAMP理论 beta/alpha/estd  beta.d
             # 计算市场平均收益
             deltax = self.cal_factor('meanRet')-FB.my_pd.cal_ts(self.cal_factor('meanRet'), 'MA', int(para[0]))
             deltay = self.cal_factor('Ret')-FB.my_pd.cal_ts(self.cal_factor('Ret'), 'MA', int(para[0]))
             self.market[code] = FB.my_pd.cal_ts(deltax*deltay, 'Sum', int(para[0]))/FB.my_pd.cal_ts(deltax**2, 'Sum', int(para[0])) 
-        elif key=='oc2hl':   # 开收重心到低高重心变动
-            self.market[code] = (self.cal_factor('high')+self.cal_factor('low'))/(self.cal_factor('open')+self.cal_factor('close')) 
+        ##############################################################################
+        ############################# 创新因子 fancy ################################
+        ##############################################################################
         else:
             pass
         if code not in self.market.columns:
             print('warning! not basic factor %s'%code)
-        #else:
-        #    return self.market[code]
