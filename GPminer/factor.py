@@ -308,13 +308,22 @@ class Factor():
                     (np.sqrt(FB.my_pd.cal_ts(deltax**2, 'Sum', int(para[0])))*\
                      np.sqrt(FB.my_pd.cal_ts(deltay**2, 'Sum', int(para[0]))))).fillna(0)
         ##############################################################################
+        ################################# 截面 cross #################################
+        ##############################################################################
+        if key=='meanRet':
+            meanRet = self.cal_factor('Ret').groupby('date').mean()
+            meanRet.name = 0
+            self.market[code] = self.market[[]].reset_index().merge(meanRet.reset_index(), \
+                on='date').set_index(['date', 'code'])[0]
+        ##############################################################################
         ############################# 经济学理论 model ################################
         ##############################################################################
-        elif key=='beta':    # CAMP理论 beta/alpha/estd  beta.d
+        elif key in ['beta', 'alpha', 'e']:    # CAMP理论 beta/alpha/estd  beta.d
             # 计算市场平均收益
             deltax = self.cal_factor('meanRet')-FB.my_pd.cal_ts(self.cal_factor('meanRet'), 'MA', int(para[0]))
             deltay = self.cal_factor('Ret')-FB.my_pd.cal_ts(self.cal_factor('Ret'), 'MA', int(para[0]))
-            self.market[code] = FB.my_pd.cal_ts(deltax*deltay, 'Sum', int(para[0]))/FB.my_pd.cal_ts(deltax**2, 'Sum', int(para[0])) 
+            self.market[code] = FB.my_pd.cal_ts(deltax*deltay, 'Sum', int(para[0]))\
+                /FB.my_pd.cal_ts(deltax**2, 'Sum', int(para[0])) 
         ##############################################################################
         ############################# 创新因子 fancy ################################
         ##############################################################################
