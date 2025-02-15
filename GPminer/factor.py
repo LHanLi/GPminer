@@ -287,7 +287,8 @@ class Factor():
         ######################## 交易活跃度、流动性 volhot #############################
         ##############################################################################
         elif key=='turnover':  
-            self.market[code] = self.cal_factor('vol')/self.cal_factor('free_float_shares')
+            if self.type=='stock':
+                self.market[code] = self.cal_factor('vol')/self.cal_factor('free_float_shares')
         elif key=='Amihud':  # 流动性
             self.market[code] = self.cal_factor('Ret')/self.cal_factor('amount')
         elif key=='UnusualVol':    # 异常成交量  UnusualVol.d
@@ -295,9 +296,9 @@ class Factor():
         ##############################################################################
         ################################ 量价相关 corr ################################
         ##############################################################################
-        elif key in ['VolVWAPCorr', 'VolAMPCorr', 'VolRetCorr']:  # 量价相关性   VolPriceCorr.d
+        elif key in ['VolvwapCorr', 'VolAMPCorr', 'VolRetCorr']:  # 量价相关性   VolPriceCorr.d
             deltax = self.cal_factor('vol')-FB.my_pd.cal_ts(self.cal_factor('vol'), 'MA', int(para[0]))
-            if key=='VolVWAPCorr':            
+            if key=='VolvwapCorr':            
                 deltay = self.cal_factor('vwap')-FB.my_pd.cal_ts(self.cal_factor('vwap'), 'MA', int(para[0]))
             elif key=='VolAMPCorr':
                 deltay = self.cal_factor('AMP.1')-FB.my_pd.cal_ts(self.cal_factor('AMP.1'), 'MA', int(para[0]))
@@ -317,7 +318,5 @@ class Factor():
         ##############################################################################
         ############################# 创新因子 fancy ################################
         ##############################################################################
-        else:
-            pass
         if code not in self.market.columns:
             print('warning! not basic factor %s'%code)
