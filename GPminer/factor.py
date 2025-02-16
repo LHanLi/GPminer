@@ -210,6 +210,10 @@ class Factor():
         ##############################################################################
         elif key=='Ret':      
             self.market[code] = self.cal_factor('close')/self.cal_factor('pre_close')-1
+        elif key=='correctRet':      # 修正收益率（上市首日修正为0）
+            correctRet = self.cal_factor('Ret').copy()
+            correctRet[self.cal_factor('dur_days')==1] = 0
+            self.market[code] = correctRet
         elif key=='highRet':     
             self.market[code] = self.cal_factor('high')/self.cal_factor('pre_close')-1
         elif key=='lowRet':     
@@ -320,10 +324,26 @@ class Factor():
         ##############################################################################
         elif key in ['beta', 'alpha', 'e']:    # CAMP理论 beta/alpha/estd  beta.d
             # 计算市场平均收益
-            deltax = self.cal_factor('meanRet')-FB.my_pd.cal_ts(self.cal_factor('meanRet'), 'MA', int(para[0]))
-            deltay = self.cal_factor('Ret')-FB.my_pd.cal_ts(self.cal_factor('Ret'), 'MA', int(para[0]))
-            self.market[code] = FB.my_pd.cal_ts(deltax*deltay, 'Sum', int(para[0]))\
-                /FB.my_pd.cal_ts(deltax**2, 'Sum', int(para[0])) 
+            MAx = FB.my_pd.cal_ts(self.cal_factor('meanRet'), 'MA', int(para[0]))
+            deltax = self.cal_factor('meanRet')-MAx
+            MAy = FB.my_pd.cal_ts(self.cal_factor('Ret'), 'MA', int(para[0])) 
+            deltay = self.cal_factor('Ret')-MAy
+            self.market['beta.'+para[0]] = FB.my_pd.cal_ts(deltax*deltay, 'Sum', int(para[0]))\
+                /FB.my_pd.cal_ts(deltax**2, 'Sum', int(para[0]))
+            self.market['alpha.'+para[0]] = MAy-self.cal_factor('beta.'+para[0])*MAx
+            self.market['e.'+para[0]] = self.cal_factor('Ret')-(self.cal_factor('beta.'+para[0])*\
+                self.cal_factor('meanRet')+self.cal_factor('alpha.'+para[0])) 
+        elif key in ['cbeta', 'calpha', 'ce']:    # CAMP理论 beta/alpha/estd  beta.d
+            # 计算市场平均收益
+            MAx = FB.my_pd.cal_ts(self.cal_factor('meanRet'), 'MA', int(para[0]))
+            deltax = self.cal_factor('meanRet')-MAx
+            MAy = FB.my_pd.cal_ts(self.cal_factor('correctRet'), 'MA', int(para[0])) 
+            deltay = self.cal_factor('correctRet')-MAy
+            self.market['cbeta.'+para[0]] = FB.my_pd.cal_ts(deltax*deltay, 'Sum', int(para[0]))\
+                /FB.my_pd.cal_ts(deltax**2, 'Sum', int(para[0]))
+            self.market['calpha.'+para[0]] = MAy-self.cal_factor('cbeta.'+para[0])*MAx
+            self.market['ce.'+para[0]] = self.cal_factor('Ret')-(self.cal_factor('cbeta.'+para[0])*\
+                self.cal_factor('meanRet')+self.cal_factor('calpha.'+para[0]))
         ##############################################################################
         ############################# 创新因子 fancy ################################
         ##############################################################################
