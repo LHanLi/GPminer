@@ -300,6 +300,8 @@ class Factor():
         elif key=='turnover':  
             if self.type=='stock':
                 self.market[code] = self.cal_factor('vol')/self.cal_factor('free_float_shares')
+            elif self.type=='bond':
+                self.market[code] = self.cal_factor('vol')/(1e8*self.cal_factor('balance')/100)
         elif key=='Amihud':  # 流动性
             self.market[code] = self.cal_factor('Ret')/self.cal_factor('amount')
         elif key=='UnusualVol':    # 异常成交量  UnusualVol.d
