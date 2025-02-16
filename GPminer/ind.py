@@ -101,7 +101,7 @@ class Score(Ind):
         return ','.join([i[0] for i in self.exp])
 
 # 排除/选取因子（确定策略池子）
-# code：'a<130|b=A,B'  exp:[[['less', 'a', 130]], [['equal', 'b', ['A', 'B']]] 
+# code：'a<130|b=A^B'  exp:[[['less', 'a', 130]], [['equal', 'b', ['A', 'B']]] 
 # ;前为include，后为exclude条件, 意为全部a<130的股票中排除掉b为A和B以及c大于C的股票。
 class Pool(Ind):
     max_exp_len = 10 # 最大因子数
@@ -137,7 +137,7 @@ class Pool(Ind):
                     opt='equal'
                     s = i.split('=')
                     value = []
-                    for i in s[1].split(','):
+                    for i in s[1].split('^'):
                         try:
                             value.append(float(i))
                         except:
