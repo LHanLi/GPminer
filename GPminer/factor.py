@@ -83,6 +83,13 @@ class Factor():
                             np.where((~ifopenuplimit)&(~ifcloseuplimit)&ifonceuplimit, '+', 0)), index=self.market.index) +\
                             pd.Series(np.where(ifcloseuplimit, '+', np.where(ifclosedownlimit, '-', 0)), index=self.market.index) # 开盘+盘中+收盘
             self.market[code] = get_PriceLimit() 
+        elif key=='ncredit':
+            if self.type=='bond':
+                replace_dict = {'AAA': 0, 'AA+': 1, 'AA+u':1, 'AA': 2, 'AA-': 3, 'A+': 4, 'A+k':4, 'A': 5, 'A-': 6,\
+                    'BBB+': 7, 'BBB': 8, 'BBB-': 9, 'BB+': 10, 'BB': 11, 'BB-': 12,\
+                        'B+': 13, 'B': 14, 'B-': 15, 'CCC': 16, 'CC': 17, 'C':18}
+                credit = self.market['credit'].fillna(self.market['credit'].mode().iloc[0]) # 众数填充
+                self.market['ncredit'] = credit.replace(replace_dict)
         ##############################################################################
         ########################### 公告 announcements ##################################
         ##############################################################################
@@ -293,6 +300,8 @@ class Factor():
         elif key=='turnover':  
             if self.type=='stock':
                 self.market[code] = self.cal_factor('vol')/self.cal_factor('free_float_shares')
+            elif self.type=='bond':
+                self.market[code] = self.cal_factor('vol')/(1e8*self.cal_factor('balance')/100)
         elif key=='Amihud':  # 流动性
             self.market[code] = self.cal_factor('Ret')/self.cal_factor('amount')
         elif key=='UnusualVol':    # 异常成交量  UnusualVol.d
