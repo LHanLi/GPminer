@@ -281,7 +281,7 @@ class Factor():
         elif key=='DownTimes':      # *.a.d 过去d日最大跌幅超过a%天数
             self.market[code] = FB.my_pd.cal_ts((self.cal_factor('lowRet')<float(para[0])/100),\
                                         'Sum', int(para[1]))
-        elif key=='ampTimes':      # *.a.d 过去d日最大波动超过a%天数
+        elif key=='AMPTimes':      # *.a.d 过去d日最大波动超过a%天数
             self.market[code] = FB.my_pd.cal_ts(self.cal_factor('maxRet')>float(para[0]),\
                                         'Sum', int(para[1]))
         elif key=='LimitTimes':      # LimitTimes.d d日涨跌停天数
