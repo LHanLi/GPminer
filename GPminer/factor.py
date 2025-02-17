@@ -83,13 +83,13 @@ class Factor():
                             np.where((~ifopenuplimit)&(~ifcloseuplimit)&ifonceuplimit, '+', 0)), index=self.market.index) +\
                             pd.Series(np.where(ifcloseuplimit, '+', np.where(ifclosedownlimit, '-', 0)), index=self.market.index) # 开盘+盘中+收盘
             self.market[code] = get_PriceLimit() 
-        elif key=='credit':
+        elif key=='ncredit':
             if self.type=='bond':
                 replace_dict = {'AAA': 0, 'AA+': 1, 'AA+u':1, 'AA': 2, 'AA-': 3, 'A+': 4, 'A+k':4, 'A': 5, 'A-': 6,\
                     'BBB+': 7, 'BBB': 8, 'BBB-': 9, 'BB+': 10, 'BB': 11, 'BB-': 12,\
                         'B+': 13, 'B': 14, 'B-': 15, 'CCC': 16, 'CC': 17, 'C':18}
-                self.market['credit'] = self.market['credit'].fillna(self.market['credit'].mode().iloc[0]) # 众数填充
-                self.market['credit'] = self.market['credit'].replace(replace_dict)
+                credit = self.market['credit'].fillna(self.market['credit'].mode().iloc[0]) # 众数填充
+                self.market['ncredit'] = credit.replace(replace_dict)
         ##############################################################################
         ########################### 公告 announcements ##################################
         ##############################################################################
