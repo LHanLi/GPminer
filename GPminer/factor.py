@@ -30,8 +30,16 @@ class Factor():
             exp = code.split('-')
             if len(exp)==1:  # 基础因子
                 self.cal_basic_factor(code)
-            else:  # 时序计算（MA/EMA/Zscore/Max/Min/Std/Sum/rank/quantile/Skew/Kurt/argmin/argmax/prod)
-                self.market[code] = FB.my_pd.cal_ts(self.cal_factor(exp[0]), exp[1], int(exp[2])) 
+            elif exp[1] in ['MA', 'EMA', 'Std', 'Zscore']: # 时序计算一元单参数 长度为3
+                self.market[code] = FB.my_pd.cal_ts(self.cal_factor(exp[0]), exp[1], int(exp[2]))
+            elif exp[1] in ['corr', ]: # 复杂时序计算,二元单参数 长度为4 vol-corr-close-120 120日量价相关性
+                deltax = self.cal_factor(exp[0])-\
+                    FB.my_pd.cal_ts(self.cal_factor(exp[0]), 'MA', int(exp[3]))
+                deltay = self.cal_factor(exp[2])-\
+                    FB.my_pd.cal_ts(self.cal_factor(exp[2]), 'MA', int(exp[3]))
+                self.market[code] = (FB.my_pd.cal_ts((deltax*deltay), 'Sum', int(exp[3]))/\
+                    (np.sqrt(FB.my_pd.cal_ts(deltax**2, 'Sum', int(exp[3])))*\
+                     np.sqrt(FB.my_pd.cal_ts(deltay**2, 'Sum', int(exp[3]))))).fillna(0)
             # 返回计算因子
             if code in self.market.columns:
                 return self.market[code] 
@@ -505,6 +513,21 @@ class Factor():
             self.market['calpha.'+para[0]] = MAy-self.cal_factor('cbeta.'+para[0])*MAx
             self.market['ce.'+para[0]] = self.cal_factor('Ret')-(self.cal_factor('cbeta.'+para[0])*\
                 self.cal_factor('meanRet')+self.cal_factor('calpha.'+para[0]))
+        ##############################################################################
+        ############################### 相关性算子 corr ###############################
+        ##############################################################################
+        #elif key=='corr':     # corr.a.b.d  a和b的d日相关性
+        elif key in ['VolvwapCorr', 'VolAMPCorr', 'VolRetCorr']:  # 量价相关性   VolPriceCorr.d
+            deltax = self.cal_factor('vol')-FB.my_pd.cal_ts(self.cal_factor('vol'), 'MA', int(para[0]))
+            if key=='VolvwapCorr':            
+                deltay = self.cal_factor('vwap')-FB.my_pd.cal_ts(self.cal_factor('vwap'), 'MA', int(para[0]))
+            elif key=='VolAMPCorr':
+                deltay = self.cal_factor('AMP.1')-FB.my_pd.cal_ts(self.cal_factor('AMP.1'), 'MA', int(para[0]))
+            elif key=='VolRetCorr':
+                deltay = self.cal_factor('Ret')-FB.my_pd.cal_ts(self.cal_factor('Ret'), 'MA', int(para[0]))
+            self.market[code] = (FB.my_pd.cal_ts((deltax*deltay), 'Sum', int(para[0]))/\
+                    (np.sqrt(FB.my_pd.cal_ts(deltax**2, 'Sum', int(para[0])))*\
+                     np.sqrt(FB.my_pd.cal_ts(deltay**2, 'Sum', int(para[0]))))).fillna(0)
         ##############################################################################
         ############################# 创新因子 fancy ################################
         ##############################################################################
