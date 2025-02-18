@@ -2,6 +2,7 @@ import GPminer as GPm
 import pandas as pd
 import numpy as np
 import FreeBack as FB
+import re
 
 
 # 因子命名格式：
@@ -10,9 +11,10 @@ import FreeBack as FB
 # method：时序算符, period: 时序算符周期
 class Factor():
     # type: stock/bond/future/crypto
-    def __init__(self, market, type='stock'):
+    def __init__(self, market, type='stock', issurance=None):
         self.market = market
         self.type = type
+        self.issurance = issurance
         for i in ['close', 'open', 'high', 'low', 'pre_close', 'amount', 'vol']:
             if i not in market.columns:
                 raise ValueError("value must include %s"%i)
@@ -83,13 +85,6 @@ class Factor():
                             np.where((~ifopenuplimit)&(~ifcloseuplimit)&ifonceuplimit, '+', 0)), index=self.market.index) +\
                             pd.Series(np.where(ifcloseuplimit, '+', np.where(ifclosedownlimit, '-', 0)), index=self.market.index) # 开盘+盘中+收盘
             self.market[code] = get_PriceLimit() 
-        elif key=='ncredit':
-            if self.type=='bond':
-                replace_dict = {'AAA': 0, 'AA+': 1, 'AA+u':1, 'AA': 2, 'AA-': 3, 'A+': 4, 'A+k':4, 'A': 5, 'A-': 6,\
-                    'BBB+': 7, 'BBB': 8, 'BBB-': 9, 'BB+': 10, 'BB': 11, 'BB-': 12,\
-                        'B+': 13, 'B': 14, 'B-': 15, 'CCC': 16, 'CC': 17, 'C':18}
-                credit = self.market['credit'].fillna(self.market['credit'].mode().iloc[0]) # 众数填充
-                self.market['ncredit'] = credit.replace(replace_dict)
         ##############################################################################
         ########################### 公告 announcements ##################################
         ##############################################################################
@@ -132,7 +127,16 @@ class Factor():
             days[code] = np.vectorize(count_tradedays)(days['anndate'], days['date'])
             self.market[code] = days.set_index(['date', 'code'])[code].fillna(999)
         ##############################################################################
-        ########################### 财务数据 finance ##################################
+        ################################ 市值 Cap ##################################
+        ##############################################################################
+        elif key=='Cap':
+             self.market[code] = self.cal_factor('total_shares')*self.cal_factor('close')/1e8
+        elif key=='floatCap':
+             self.market[code] = self.cal_factor('float_shares')*self.cal_factor('close')/1e8
+        elif key=='freeCap':
+             self.market[code] = self.cal_factor('free_float_shares')*self.cal_factor('close')/1e8
+        ##############################################################################
+        ####################### 财务数据 finance 股票专属 #############################
         ##############################################################################
         elif key=='现金':
             self.market['现金'] = self.cal_factor('currency')/1e8
@@ -192,14 +196,73 @@ class Factor():
         elif key=='净利润同比':
             self.market['净利润同比'] = self.cal_factor('profit-YOY')
         ##############################################################################
-        ################################ 市值 Cap ##################################
+        ######################### 纯债数据 bond 债券专属 ##############################
         ##############################################################################
-        elif key=='Cap':
-             self.market[code] = self.cal_factor('total_shares')*self.cal_factor('close')/1e8
-        elif key=='floatCap':
-             self.market[code] = self.cal_factor('float_shares')*self.cal_factor('close')/1e8
-        elif key=='freeCap':
-             self.market[code] = self.cal_factor('free_float_shares')*self.cal_factor('close')/1e8
+        elif key=='ncredit':
+            if self.type=='bond':
+                replace_dict = {'AAA': 0, 'AA+': 1, 'AA+u':1, 'AA': 2, 'AA-': 3, 'A+': 4, 'A+k':4, 'A': 5, 'A-': 6,\
+                    'BBB+': 7, 'BBB': 8, 'BBB-': 9, 'BB+': 10, 'BB': 11, 'BB-': 12,\
+                        'B+': 13, 'B': 14, 'B-': 15, 'CCC': 16, 'CC': 17, 'C':18}
+                credit = self.market['credit'].fillna(self.market['credit'].mode().iloc[0]) # 众数填充
+                self.market['ncredit'] = credit.replace(replace_dict)
+        elif key=='bond_prem':
+            self.market[code] = self.cal_factor('close')/self.cal_factor('pure_bond')-1
+        elif key=='init_balance':
+            temp = self.market[[]].reset_index().merge(self.issurance[['code', 'total_amount']]\
+                                    , on='code').set_index(['date', 'code'])
+            self.market['init_balance'] = temp['total_amount']/1e8
+        elif key=='remain_ratio':
+            self.market[code] = self.cal_factor('balance')/self.cal_factor('init_balance')
+        elif key=='balance_cash':
+            self.market[code] = self.cal_factor('balance')/self.cal_factor('a_现金')
+        elif key=='balance_asset':
+            self.market[code] = self.cal_factor('balance')/self.cal_factor('a_总资产')
+        elif key=='hold_money':        # 持有到期获得现金（不包含中间利息
+            def get_return_money(string):
+                try:
+                    n = int(re.findall("[0-9]*\.?[0-9]+", string)[-1])
+                    if n>100:
+                        return n
+                    else:
+                        return 100+n
+                except:
+                    return 100
+            self.issurance['hold_money'] = self.issurance['compen_interest'].map(\
+                lambda x: get_return_money(x))
+            temp = self.market[[]].reset_index().merge(self.issurance[['code', 'hold_money']],\
+                        on='code').set_index(['date', 'code'])
+            self.market[code] = temp['hold_money']
+        elif key=='hold_ratio':  # 持有到期税前收益
+            self.market[code] = self.cal_factor('hold_money')/self.cal_factor('close')-1
+        elif key=='hold_rate': # 持有到期收益率
+            self.market[code] = (1+self.cal_factor('hold_ratio'))**\
+                                            (365/self.cal_factor('last_days'))-1
+        ##############################################################################
+        ######################### 期权数据 option 债券专属 ##############################
+        ##############################################################################
+        elif key=='Pc':
+             self.market[code] = self.cal_factor('a_close')*100/self.cal_factor('conversion')
+        elif key=='conv_prem':
+            self.market[code] = self.cal_factor('close')/self.cal_factor('Pc')-1
+        elif key=='dblow':    # dblow.x 
+            self.market[code] = self.cal_factor('conv_prem')*int(para[0])+self.cal_factor('close')
+        elif key=='PcvB':    # 纯债转股溢价率
+            self.market[code] = (self.cal_factor('Pc')-self.cal_factor('pure_bond'))/\
+                                                        self.cal_factor('pure_bond')
+        elif key in ['call', 'put']:
+            from scipy.stats import norm
+            def BSM(S, K, T, sigma, r=0.03, option='call'):
+                # 利率全部统一到交易日
+                T = T/250
+                r = r*365/250
+                d1 = (np.log(S/K) + (r + 0.5*sigma**2)*T)/(sigma*np.sqrt(T))
+                d2 = (np.log(S/K) + (r - 0.5*sigma**2)*T)/(sigma * np.sqrt(T))
+                if option == 'call':
+                    p = (S*norm.cdf(d1) - K*np.exp(-r*T)*norm.cdf(d2))
+                elif option == 'put':
+                    p = (K*np.exp(-r*T)*norm.cdf(-d2) - S*norm.cdf(-d1))
+                return p
+            self.market[code] = 1 #self.cal_factor()
         ##############################################################################
         ################################ 价格因子 price ##############################
         ##############################################################################
