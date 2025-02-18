@@ -2,7 +2,8 @@ import GPminer as GPm
 import pandas as pd
 import numpy as np
 import FreeBack as FB
-import re
+from scipy.stats import norm
+import re, math
 
 
 # 因子命名格式：
@@ -130,11 +131,16 @@ class Factor():
         ################################ 市值 Cap ##################################
         ##############################################################################
         elif key=='Cap':
-             self.market[code] = self.cal_factor('total_shares')*self.cal_factor('close')/1e8
+            if self.type=='stock':
+                self.market[code] = self.cal_factor('total_shares')*self.cal_factor('close')/1e8
+            elif self.type=='bond':
+                self.market[code] = self.cal_factor('balance')*self.cal_factor('close')/100
         elif key=='floatCap':
              self.market[code] = self.cal_factor('float_shares')*self.cal_factor('close')/1e8
         elif key=='freeCap':
              self.market[code] = self.cal_factor('free_float_shares')*self.cal_factor('close')/1e8
+        elif key=='Cap_ratio':
+            self.market[code] = self.cal_factor('Cap')/self.cal_factor('a_freeCap')
         ##############################################################################
         ####################### 财务数据 finance 股票专属 #############################
         ##############################################################################
@@ -249,12 +255,8 @@ class Factor():
         elif key=='PcvB':    # 纯债转股溢价率
             self.market[code] = (self.cal_factor('Pc')-self.cal_factor('pure_bond'))/\
                                                         self.cal_factor('pure_bond')
-        elif key in ['call', 'put']:
-            from scipy.stats import norm
-            def BSM(S, K, T, sigma, r=0.03, option='call'):
-                # 利率全部统一到交易日
-                T = T/250
-                r = r*365/250
+        elif key in ['call', 'put']:   # call.d 使用d日波动率
+            def BSM(S, K, T, sigma, r=0, option='call'):
                 d1 = (np.log(S/K) + (r + 0.5*sigma**2)*T)/(sigma*np.sqrt(T))
                 d2 = (np.log(S/K) + (r - 0.5*sigma**2)*T)/(sigma * np.sqrt(T))
                 if option == 'call':
@@ -262,7 +264,92 @@ class Factor():
                 elif option == 'put':
                     p = (K*np.exp(-r*T)*norm.cdf(-d2) - S*norm.cdf(-d1))
                 return p
-            self.market[code] = 1 #self.cal_factor()
+            self.market[code] = BSM(self.cal_factor('Pc'), self.cal_factor('hold_money'),\
+                self.cal_factor('last_tradedays'), self.cal_factor('Ret-Std-%s'%para[0]),\
+                    option=key)
+        elif key=='delta':   # delta.call.d  # call
+            def Delta(S, K, T, sigma, r=0, option='call'):
+                d1 = (np.log(S/K) + (r + 0.5*sigma**2)*T)/(sigma*np.sqrt(T))
+                if option == 'call':
+                    delta = norm.cdf(d1)
+                elif option == 'put':
+                    delta = norm.cdf(d1) - 1
+                return delta
+            self.market[code] = Delta(self.cal_factor('Pc'), self.cal_factor('hold_money'),\
+                self.cal_factor('last_tradedays'), self.cal_factor('Ret-Std-%s'%para[1]),\
+                    option=para[0])
+        elif key=='Gamma':   # Gamma.d
+            def Gamma(S, K, T, sigma, r=0):
+                # 利率全部统一到交易日
+                d1 = (np.log(S/K) + (r + 0.5*sigma**2)*T)/(sigma*np.sqrt(T))
+                gamma = (np.exp(-d1**2/2)/(np.sqrt(2*math.pi)))/(S*sigma*np.sqrt(T))
+                return gamma
+            self.market[code] = Gamma(self.cal_factor('Pc'), self.cal_factor('hold_money'),\
+                self.cal_factor('last_tradedays'), self.cal_factor('Ret-Std-%s'%para[0]))
+        elif key=='Theta':    # Theta.call.d
+            def Theta(S, K, T, sigma, r=0, option='call'):
+                d1 = (np.log(S/K) + (r + 0.5*sigma**2)*T)/(sigma*np.sqrt(T))
+                d2 = (np.log(S/K) + (r - 0.5*sigma**2)*T)/(sigma * np.sqrt(T))
+
+                if option == 'call':
+                    theta = -S*sigma*(np.exp(-d1**2/2)/(np.sqrt(2*math.pi)))/(2*np.sqrt(T)) - r*K*np.exp(-r*T)*norm.cdf(d2)
+                elif option == 'put':
+                    theta = -S*sigma*(np.exp(-d1**2/2)/(np.sqrt(2*math.pi)))/(2*np.sqrt(T)) + r*K*np.exp(-r*T)*norm.cdf(-d2)
+                return theta
+            self.market[code] = Theta(self.cal_factor('Pc'), self.cal_factor('hold_money'),\
+                self.cal_factor('last_tradedays'), self.cal_factor('Ret-Std-%s'%para[1]),\
+                    option=para[0])
+        elif key=='Vega':   # Vega.d
+            def Vega(S, K, T, sigma, r=0):
+                d1 = (np.log(S/K) + (r + 0.5*sigma**2)*T)/(sigma*np.sqrt(T))
+                vega = S*np.sqrt(T)*np.exp(-d1**2/2)/np.sqrt(2*math.pi)  
+                return vega
+            self.market[code] = Vega(self.cal_factor('Pc'), self.cal_factor('hold_money'),\
+                self.cal_factor('last_tradedays'), self.cal_factor('Ret-Std-%s'%para[0]))
+        elif key=='IV':    # IV.call
+            # 隐含波动率（可以为负值）,  P 期权价格
+            def BSM(S, K, T, sigma, r=0, option='call'):
+                d1 = (np.log(S/K) + (r + 0.5*sigma**2)*T)/(sigma*np.sqrt(T))
+                d2 = (np.log(S/K) + (r - 0.5*sigma**2)*T)/(sigma * np.sqrt(T))
+                if option == 'call':
+                    p = (S*norm.cdf(d1) - K*np.exp(-r*T)*norm.cdf(d2))
+                elif option == 'put':
+                    p = (K*np.exp(-r*T)*norm.cdf(-d2) - S*norm.cdf(-d1))
+                return p
+            def IV(P,S,K,T,r=0, option='call'):      #从0.001 - 1.000进行二分查找
+                sigma_min = 1e-3           # 设定波动率初始最小值
+                sigma_max = 3           # 设定波动率初始最大值(能计算出值的最大基本在2.7，之后就往无限大走了)
+            #    sigma_mid = (sigma_min + sigma_max) / 2
+                V_min = BSM(S, K, T, sigma_min, r, option)
+                V_max = BSM(S, K, T, sigma_max, r, option)
+            #    V_mid = BSM(S,K,sigma_mid,r,T, option)
+                if P < V_min:
+                    #print('IV less than sigma_min')
+                    return sigma_min                            # 隐波记为0
+                elif P > V_max:
+                    #print('IV big than sigma_max')
+                    return sigma_max
+                # 波动率差值收敛到0.01%为止
+                diff = sigma_max - sigma_min
+                while abs(diff) > 0.0001:
+                    sigma_mid = (sigma_min + sigma_max) / 2
+                    V_mid = BSM(S, K, T, sigma_mid, r, option)
+                    # V_mid小于价格，说明sigma_mid小于隐含波动率
+                    if P > V_mid:
+                        sigma_min = sigma_mid
+                    else:
+                        sigma_max = sigma_mid
+                    diff = sigma_max - sigma_min
+                return sigma_mid
+            self.market[code] = self.market.apply(lambda x: IV(x['close']-x['hold_money'],\
+                x['Pc'], x['hold_money'], x['last_tradedays'], option=para[0]), axis=1)
+        elif key=='theory_prem':  # 理论溢价率  theory_prem.call.d
+            if para[0]=='call':
+                self.market[code] = self.cal_factor('close')/\
+                    (self.cal_factor('pure_bond')+self.cal_factor('call.'+para[1]))-1 
+            elif para[0]=='put':
+                self.market[code] = self.cal_factor('close')/\
+                    (self.cal_factor('Pc')+self.cal_factor('put.'+para[1]))-1 
         ##############################################################################
         ################################ 价格因子 price ##############################
         ##############################################################################
