@@ -30,7 +30,7 @@ class Factor():
             exp = code.split('-')
             if len(exp)==1:  # 基础因子
                 self.cal_basic_factor(code)
-            elif exp[1] in ['MA', 'EMA', 'Std', 'Zscore']: # 时序计算一元单参数 长度为3
+            elif exp[1] in ['MA', 'EMA', 'Std', 'Sum', 'Zscore']: # 时序计算一元单参数 长度为3
                 self.market[code] = FB.my_pd.cal_ts(self.cal_factor(exp[0]), exp[1], int(exp[2]))
             elif exp[1] in ['corr', ]: # 复杂时序计算,二元单参数 长度为4 vol-corr-close-120 120日量价相关性
                 deltax = self.cal_factor(exp[0])-\
