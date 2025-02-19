@@ -44,6 +44,8 @@ class Gen():
                         self.para_space[factor] = (False, sorted(market[factor].unique())[1:-1]) 
                 else:
                     self.para_space[factor] = (True, list(market[factor].unique())) 
+        # 排除无法比较的打分因子
+
     # 从basket中因子获得popu
     def get_seeds(self, exclude=True):
         def seeds_Score():
