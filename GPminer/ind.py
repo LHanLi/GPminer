@@ -53,17 +53,34 @@ class Score(Ind):
         self.score = self
     # 保证等价的表达式唯一
     def uexp(self):
-        exp = [] 
-        already = []
-        shuffle(self.exp)  # 当因子重复出现时添加一些随机性
+        #already = []
+        #shuffle(self.exp)  # 当因子重复出现时添加一些随机性
+        #for i in self.exp:
+        #    # 如果出现0或负值则直接跳过
+        #    if i[2]<=0:
+        #        continue
+        #    # 如果同一因子出现两次以上则只保留第一个
+        #    elif i[0] not in already:
+        #        already.append(i[0])
+        #        exp.append(i)
+
+        # 如果因子重复出现，权重相加
+        exp = {} # 存储每个factor的方向/权重
         for i in self.exp:
-            # 如果出现0或负值则直接跳过
-            if i[2]<=0:
-                continue
-            # 如果同一因子出现两次以上则只保留第一个
-            elif i[0] not in already:
-                already.append(i[0])
-                exp.append(i)
+            if i[0] not in exp.keys():
+                exp[i[0]] = [i[1], i[2]]
+            else:
+                if exp[i[0]][0]==i[1]:
+                    exp[i[0]][1] += i[2]
+                elif exp[i[0]][1]<i[2]:
+                    exp[i[0]][0] = i[1]
+                    exp[i[0]][1] = i[2]-exp[i[0]][1]
+                elif exp[i[0]][1]>i[2]:
+                    exp[i[0]][1] = exp[i[0]][1]-i[2]
+                else:   # 正负相同直接取消该因子
+                    exp.pop(i[0])
+        exp = [[k, v[0], v[1]] for k,v in exp.items()] 
+        shuffle(exp)  # 截断需要随机性 
         exp = exp[:self.max_exp_len]
         # 除以最大公因数
         ws = [i[2] for i in exp] 
@@ -139,7 +156,7 @@ class Pool(Ind):
                     value = []
                     for i in s[1].split('^'):
                         try:
-                            value.append(float(i))
+                            value.append(float(i))  # 如果可以变成数字就是数字
                         except:
                             value.append(i)
                     factor = s[0]
