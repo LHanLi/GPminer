@@ -379,7 +379,7 @@ class Gen():
         self.popu.add(ind.code)
     # 合成因子
     def mutation_sum(self, ind0, ind1):
-        GPm.ino.log('mutation_sum 变异%s, %s'%(ind0.code, ind1.code))
+        #GPm.ino.log('mutation_sum 变异%s, %s'%(ind0.code, ind1.code))
         if type(ind0)==GPm.ind.Score:
             return GPm.ind.Score(ind0.code+'+'+ind1.code)
         elif  (type(ind0)==GPm.ind.Pooland) | (type(ind0)==GPm.ind.Pool):
@@ -422,6 +422,7 @@ class Gen():
                 run_mul(func)
                 #GPm.ino.log('执行完毕')
             except:
-                GPm.ino.log('warning!!! %s超过最大运行时间5s'%func)
+                pass
+                #GPm.ino.log('warning!!! %s超过最大运行时间5s'%func)
 
 
