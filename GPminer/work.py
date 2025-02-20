@@ -37,7 +37,7 @@ class Miner():
         self.code_returns = code_returns
         self.max_extract = max_extract
         self.fixp = fixp
-        GPm.log('Miner对象成功生成')
+        GPm.ino.log('Miner对象成功生成')
     def prepare(self, fitness='sharpe',\
                  population_size=10, evolution_ratio=0.2, tolerance_g=3, max_g=10,\
                   prob_dict={}, select_alg='cut', n_core=4, exclude=True):
@@ -64,7 +64,7 @@ class Miner():
             while len(self.gen0.popu.codes)<int(10*self.population_size):
                 self.gen0.multiply()
             self.seeds = list(self.gen0.popu.codes)
-        GPm.log('Miner对象初始化完成')
+        GPm.ino.log('Miner对象初始化完成')
     def run(self, pooltype='or'):
         workfile = datetime.datetime.now().strftime("%m%d%H%M_%S_%f")+\
                             '_%s'%np.random.rand()
@@ -179,6 +179,10 @@ class Miner():
                     popu0.reset(select)
             GPm.ino.log('第%s轮进化完成，最大%s:%.2lf'%(g, self.fitness, fitness_df.iloc[0][self.fitness]))
             if ((g-max_loc)>=self.tolerance_g)|(g>=(self.max_g-1)):
+                if ((g-max_loc)>=self.tolerance_g):
+                    GPm.ino.log('适应度连续%s代不提升，结束进化'%self.tolerance_g)
+                elif g>=(self.max_g-1):
+                    GPm.ino.log('进化轮次达到%s代，退出进化'%self.max_g)
                 cost = time.time()-t0
                 GPm.ino.log('=====此初始种群进化完成=====共计算%d个策略，总耗时%.1lfs，单策略耗时%.2lfs'%(\
                     len(fitness_all), cost, cost/len(fitness_all)))
