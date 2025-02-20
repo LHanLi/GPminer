@@ -48,6 +48,8 @@ class Gen():
 
     # 从basket中因子获得popu
     def get_seeds(self, exclude=True):
+        # 最多种子数量
+        max_seeds = 1000
         def seeds_Score():
             popu0 = GPm.popu.Population() 
             # 遍历单因子、双因子, 作为种子组合
@@ -108,7 +110,6 @@ class Gen():
             if len(exp)==1:
                 return ind
             random_select = np.random.randint(len(exp)) 
-            GPm.ino.log('选择变异%s第%s个因子权重'%(ind.code, random_select))
             deltawmax = 0.1 # 权重改变幅度小于此阈值   # 声明常数 constant
             deltawmin = 0.02 # 权重改变幅度大于此阈值
             max_step = 100 # 寻找新权重组合最大尝试次数
@@ -220,6 +221,7 @@ class Gen():
     # 增减因子
     def mutation_and(self, ind):
         exp = copy.deepcopy(ind.exp)
+        GPm.ino.log('mutation_and 变异%s'%(ind.code))
         if type(ind)==GPm.ind.Score:
             random_select0 = np.random.randint(len(exp))
             if (np.random.rand()>0.5)&(len(exp)!=1):
