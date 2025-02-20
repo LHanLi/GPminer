@@ -65,12 +65,12 @@ class Gen():
             popu0 = GPm.popu.Population() 
             allseeds = ['1*%s*'%i+j for i in ['True', 'False'] for j in self.score_basket]
             if len(allseeds)>max_seeds:
-                print('all onefactors')
+                #print('all onefactors')
                 seeds = sample(allseeds, max_seeds)
                 popu0.add(set(seeds))
             else:
                 popu0.add(set(allseeds))
-                print('add some twofactors')
+                #print('add some twofactors')
                 allseeds = ['1*%s*'%a+i+'+'+'1*%s*'%b+j for i,j in \
                     combinations(self.score_basket, 2) for a in ['True', 'False'] \
                         for b in ['True', 'False']]
@@ -252,7 +252,8 @@ class Gen():
                 less_value = sorted([i for i in thisfactor_space[1] if i<exp[select_inexlude][select_loc][2]])
                 larger_value = sorted([i for i in thisfactor_space[1] if i>exp[select_inexlude][select_loc][2]])
                 if (less_value == []) & (larger_value == []):
-                    print('没有可变异的值')
+                    #print('没有可变异的值')
+                    pass
                 elif less_value==[]:
                     exp[select_inexlude][select_loc][2] = larger_value[0]
                 elif larger_value==[]:
