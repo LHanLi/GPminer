@@ -71,7 +71,7 @@ class Eval():
         # 获取打分
         for factor in self.score.exp:
             self.market[factor[0]+'_score'] = process_factor(factor[0]).groupby('date').\
-                rank(ascending=factor[1])*factor[2]
+                rank(ascending=factor[1])*int(factor[2])
         basescore = [i[0]+'_score' for i in self.score.exp]
         self.market['score'] = self.market[basescore].sum(axis=1)
         #ino.log('获取打分耗时', time.time()-time0)
