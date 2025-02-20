@@ -50,58 +50,112 @@ class Gen():
     def get_seeds(self, exclude=True):
         # 最多种子数量
         max_seeds = 1000
+        GPm.log('最大种子数量%s'%max_seeds)
         def seeds_Score():
+            #popu0 = GPm.popu.Population() 
+            ## 遍历单因子、双因子, 作为种子组合
+            #for i in self.score_basket:
+            #    popu0.add({GPm.ind.Score([[i, True, 1]]).code, GPm.ind.Score([[i, False, 1]]).code})
+            #for i,j in list(combinations(self.score_basket, 2)):
+            #    for b0 in [True, False]:
+            #        for b1 in [True, False]:
+            #            popu0.add(GPm.ind.Score([[i, b0, 1], [j, b1, 1]]).code)
+            #return popu0
             popu0 = GPm.popu.Population() 
-            # 遍历单因子、双因子, 作为种子组合
-            for i in self.score_basket:
-                popu0.add({GPm.ind.Score([[i, True, 1]]).code, GPm.ind.Score([[i, False, 1]]).code})
-            for i,j in list(combinations(self.score_basket, 2)):
-                for b0 in [True, False]:
-                    for b1 in [True, False]:
-                        popu0.add(GPm.ind.Score([[i, b0, 1], [j, b1, 1]]).code)
+            allseeds = ['1*%s*'%i+j for i in ['True', 'False'] for j in self.score_basket]
+            if len(allseeds)>max_seeds:
+                print('all onefactors')
+                seeds = sample(allseeds, max_seeds)
+                popu0.add(set(seeds))
+            else:
+                popu0.add(set(allseeds))
+                print('add some twofactors')
+                allseeds = ['1*%s*'%a+i+'+'+'1*%s*'%b+j for i,j in \
+                    combinations(self.score_basket, 2) for a in ['True', 'False'] \
+                        for b in ['True', 'False']]
+                seeds = sample(allseeds, max_seeds-len(popu0.codes))
+                for s in seeds:     # 多因子需要调整顺序，得到唯一字符串
+                    popu0.add(GPm.ind.Score(s).code)
             return popu0
         # 仅生成排除因子
         def seeds_Pool():
             popu0 = GPm.popu.Population(GPm.ind.Pool)
-            # 单因子组合
-            for factor in self.pool_basket:
+            allseeds = []
+            for factor in self.pool_basket:   # 单因子组合
                 for threshold in self.para_space[factor][1]:
                     # 离散变量使用=
                     if self.para_space[factor][0]:
                         if exclude:
-                            pool0 = GPm.ind.Pool([[], [['equal', factor, [threshold, ]]]])
+                            s = ';%s=%s'%(factor, threshold)
                         else:
-                            pool0 = GPm.ind.Pool([[['equal', factor, [threshold, ]]], []])
-                        popu0.add(pool0.code)
+                            s = '%s=%s;'%(factor, threshold)
+                        allseeds.append(s)
                     else:
-                        if exclude:
-                            pool0 = GPm.ind.Pool([[], [['less', factor, threshold]]])
-                        else:
-                            pool0 = GPm.ind.Pool([[['less', factor, threshold]], []])
-                        popu0.add(pool0.code)
-                        if exclude:
-                            pool0 = GPm.ind.Pool([[], [['greater', factor, threshold]]])
-                        else:
-                            pool0 = GPm.ind.Pool([[['greater', factor, threshold]], []])
-                        popu0.add(pool0.code)
-            popu0 = popu0.subset(int(0.1*len(popu0.codes)))
-            # 两因子组合
-            if exclude:
-                combos = [GPm.ind.Pool(i[0] + '|' + i[1][1:]).code \
-                                 for i in combinations(popu0.codes, 2)]
+                        if threshold!=self.para_space[factor][1][0]: # 最小的阈值不需要小于算子
+                            if exclude:
+                                s = ';%s<%s'%(factor, threshold)
+                            else:
+                                s = '%s<%s;'%(factor, threshold)
+                            allseeds.append(s)
+                        if threshold!=self.para_space[factor][1][-1]:
+                            if exclude:
+                                s = ';%s>%s'%(factor, threshold)
+                            else:
+                                s = '%s>%s;'%(factor, threshold)
+                            allseeds.append(s)
+            if max_seeds<len(allseeds):
+                seeds = sample(allseeds, max_seeds)
             else:
-                combos = [GPm.ind.Pool(i[0][:-1] + '|' + i[1]).code \
-                                 for i in combinations(popu0.codes, 2)]
-            popu0.add(set(sample(combos, int(0.1*len(combos)))))
-            popu0.add(set(combos))
-            return popu0
+                seeds = allseeds
+                if exclude:
+                    allseeds = [GPm.ind.Pool(i+'|'+j[1:]) for i,j in combinations(allseeds, 2)]
+                    allseeds = [i.code for i in allseeds if len(i.exp[1])>1]
+                else:
+                    allseeds = [GPm.ind.Pool(i[:-1]+'|'+j) for i,j in combinations(allseeds, 2)]
+                    allseeds = [i.code for i in allseeds if len(i.exp[0])>1]
+                seeds = seeds + sample(allseeds, max_seeds-len(seeds))
+            popu0.add(set(seeds))
+            return popu0 
+            ## 单因子组合
+            #for factor in self.pool_basket:
+            #    for threshold in self.para_space[factor][1]:
+            #        # 离散变量使用=
+            #        if self.para_space[factor][0]:
+            #            if exclude:
+            #                pool0 = GPm.ind.Pool([[], [['equal', factor, [threshold, ]]]])
+            #            else:
+            #                pool0 = GPm.ind.Pool([[['equal', factor, [threshold, ]]], []])
+            #            popu0.add(pool0.code)
+            #        else:
+            #            if exclude:
+            #                pool0 = GPm.ind.Pool([[], [['less', factor, threshold]]])
+            #            else:
+            #                pool0 = GPm.ind.Pool([[['less', factor, threshold]], []])
+            #            popu0.add(pool0.code)
+            #            if exclude:
+            #                pool0 = GPm.ind.Pool([[], [['greater', factor, threshold]]])
+            #            else:
+            #                pool0 = GPm.ind.Pool([[['greater', factor, threshold]], []])
+            #            popu0.add(pool0.code)
+            #popu0 = popu0.subset(int(0.1*len(popu0.codes)))
+            ## 两因子组合
+            #if exclude:
+            #    combos = [GPm.ind.Pool(i[0] + '|' + i[1][1:]).code \
+            #                     for i in combinations(popu0.codes, 2)]
+            #else:
+            #    combos = [GPm.ind.Pool(i[0][:-1] + '|' + i[1]).code \
+            #                     for i in combinations(popu0.codes, 2)]
+            #popu0.add(set(sample(combos, int(0.1*len(combos)))))
+            #popu0.add(set(combos))
+            #return popu0
         if self.popu.type==(GPm.ind.Score):
             return seeds_Score().codes
         # Pool和Pooland的code/exp是互通的
         elif  (self.popu.type==GPm.ind.Pooland) | (self.popu.type==(GPm.ind.Pool)):
             return seeds_Pool().codes
         elif self.popu.type==(GPm.ind.SP):
-            return set(i[0]+'&'+i[1] for i in zip(seeds_Score().codes, seeds_Pool().codes))
+            return set(sample([i+'&'+j for i,j in \
+                        zip(seeds_Score().codes, seeds_Pool().codes)], max_seeds))
     # 增大或减小某因子参数
     def mutation_d(self, ind):
         exp = copy.deepcopy(ind.exp)
@@ -319,7 +373,24 @@ class Gen():
         self.popu.add(ind.code)
     # 合成因子
     def mutation_sum(self, ind0, ind1):
-        pass
+        if type(ind0)==GPm.ind.Score:
+            return GPm.ind.Score(ind0.code+'+'+ind1.code)
+        elif  (type(ind0)==GPm.ind.Pooland) | (type(ind0)==GPm.ind.Pool):
+            def split(ind, exclude=True):
+                indsplit = ind.code.split(';')
+                if exclude:
+                    return indsplit[1:] if indsplit[1]!='' else []
+                else:
+                    return indsplit[:1] if indsplit[0]!='' else []
+            ind = '|'.join(split(ind0, False)+split(ind1, False))+';'+\
+                                '|'.join(split(ind0)+split(ind1))
+            return GPm.ind.Pool(ind)
+        else:
+            return self.mutation_sum(ind0.score, ind1.score).code+'&'+\
+                        self.mutation_sum(ind0.pool, ind1.pool)
+    def popu_mutation_sum(self):
+        ind = self.mutation_sum(self.popu.subset(), self.popu.subset())
+        self.popu.add(ind.code)
     # 种群繁殖
     def multiply(self, multi=2, prob_dict={}):
         # 各算子被执行的概率，如果空则全部算子等概率执形
