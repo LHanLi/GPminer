@@ -5,6 +5,7 @@ import GPminer as GPm
 from itertools import combinations
 import time, copy
 
+mutation_ratio = 0.5  # 打分排除因子变异比例
 # 种群繁殖类
 
 class Gen():
@@ -49,8 +50,8 @@ class Gen():
     # 从basket中因子获得popu
     def get_seeds(self, exclude=True):
         # 最多种子数量
-        max_seeds = 1000
-        GPm.log('最大种子数量%s'%max_seeds)
+        max_seeds = 10000
+        GPm.ino.log('最大种子数量%s'%max_seeds)
         def seeds_Score():
             #popu0 = GPm.popu.Population() 
             ## 遍历单因子、双因子, 作为种子组合
@@ -76,6 +77,7 @@ class Gen():
                 seeds = sample(allseeds, max_seeds-len(popu0.codes))
                 for s in seeds:     # 多因子需要调整顺序，得到唯一字符串
                     popu0.add(GPm.ind.Score(s).code)
+            GPm.ino.log('生成%s Score种子'%len(popu0.codes))
             return popu0
         # 仅生成排除因子
         def seeds_Pool():
@@ -115,6 +117,7 @@ class Gen():
                     allseeds = [i.code for i in allseeds if len(i.exp[0])>1]
                 seeds = seeds + sample(allseeds, max_seeds-len(seeds))
             popu0.add(set(seeds))
+            GPm.ino.log('生成%s Pool种子'%len(popu0.codes))
             return popu0 
             ## 单因子组合
             #for factor in self.pool_basket:
@@ -154,8 +157,11 @@ class Gen():
         elif  (self.popu.type==GPm.ind.Pooland) | (self.popu.type==(GPm.ind.Pool)):
             return seeds_Pool().codes
         elif self.popu.type==(GPm.ind.SP):
-            return set(sample([i+'&'+j for i,j in \
-                        zip(seeds_Score().codes, seeds_Pool().codes)], max_seeds))
+            seeds_score = seeds_Score()
+            seeds_pool = seeds_Pool()
+            mix = [i+'&'+j for i in seeds_score.codes for j in seeds_pool.codes]
+            GPm.ino.log('生成%s SP种子'%len(mix))
+            return set(sample(mix, max_seeds))
     # 增大或减小某因子参数
     def mutation_d(self, ind):
         exp = copy.deepcopy(ind.exp)
@@ -275,7 +281,7 @@ class Gen():
     # 增减因子
     def mutation_and(self, ind):
         exp = copy.deepcopy(ind.exp)
-        GPm.ino.log('mutation_and 变异%s'%(ind.code))
+        #GPm.ino.log('mutation_and 变异%s'%(ind.code))
         if type(ind)==GPm.ind.Score:
             random_select0 = np.random.randint(len(exp))
             if (np.random.rand()>0.5)&(len(exp)!=1):
@@ -373,6 +379,7 @@ class Gen():
         self.popu.add(ind.code)
     # 合成因子
     def mutation_sum(self, ind0, ind1):
+        GPm.ino.log('mutation_sum 变异%s, %s'%(ind0.code, ind1.code))
         if type(ind0)==GPm.ind.Score:
             return GPm.ind.Score(ind0.code+'+'+ind1.code)
         elif  (type(ind0)==GPm.ind.Pooland) | (type(ind0)==GPm.ind.Pool):
