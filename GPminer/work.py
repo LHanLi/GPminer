@@ -37,6 +37,7 @@ class Miner():
         self.code_returns = code_returns
         self.max_extract = max_extract
         self.fixp = fixp
+        GPm.log('Miner对象成功生成')
     def prepare(self, fitness='sharpe',\
                  population_size=10, evolution_ratio=0.2, tolerance_g=3, max_g=10,\
                   prob_dict={}, select_alg='cut', n_core=4, exclude=True):
@@ -63,6 +64,7 @@ class Miner():
             while len(self.gen0.popu.codes)<int(10*self.population_size):
                 self.gen0.multiply()
             self.seeds = list(self.gen0.popu.codes)
+        GPm.log('Miner对象初始化完成')
     def run(self, pooltype='or'):
         workfile = datetime.datetime.now().strftime("%m%d%H%M_%S_%f")+\
                             '_%s'%np.random.rand()
