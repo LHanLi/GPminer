@@ -155,10 +155,10 @@ class Pool(Ind):
                     s = i.split('=')
                     value = []
                     for i in s[1].split('^'):
-                        try:
-                            value.append(float(i))  # 如果可以变成数字就是数字
-                        except:
-                            value.append(i)
+                        #try:
+                        #    value.append(float(i))  # 如果可以变成数字就是数字
+                        #except:
+                        value.append(i)
                     factor = s[0]
                 one = [opt, factor, value]
                 exp.append(one)
