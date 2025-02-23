@@ -16,11 +16,11 @@ class Factor():
         self.market = market
         self.type = type
         self.issurance = issurance
-        for i in ['close', 'open', 'high', 'low', 'pre_close', 'amount', 'vol']:
-            if i not in market.columns:
-                raise ValueError("value must include %s"%i)
-        if 'exfactor' not in market.columns:
-            self.cal_factor('exfactor')
+        #for i in ['close', 'open', 'high', 'low', 'pre_close', 'amount', 'vol']:
+        #    if i not in market.columns:
+        #        raise ValueError("value must include %s"%i)
+        #if 'exfactor' not in market.columns:
+        #    self.cal_factor('exfactor')
     # 计算/引用因子
     def cal_factor(self, code, ifrecal=False):
         if (code in self.market.columns)&(not ifrecal):
@@ -30,6 +30,21 @@ class Factor():
             exp = code.split('-')
             if len(exp)==1:  # 基础因子
                 self.cal_basic_factor(code)
+            elif exp[1] in ['days', 'tradedays']: # 一元无参数 长度为2
+                if exp[1]=='days':   # days.a 距离上次a为True天数
+                    dayscode = self.market[self.cal_factor(exp[0])][[]].reset_index()
+                    dayscode['anndate'] = dayscode['date']
+                    alldayscode = self.market[[]].reset_index()
+                    days = alldayscode.merge(dayscode, on=['date', 'code'], how='left')
+                    days = days.set_index(['date', 'code']).groupby('code')['anndate'].ffill()
+                    days = days.reset_index()
+                    days[code] = ((days['date']-days['anndate']).dt.days+1).fillna(999)
+                    self.market[code] = days.set_index(['date', 'code'])[code]
+                elif exp[1]=='tradedays':
+                    mask = self.cal_factor(exp[0]).astype(int)
+                    groups = mask.groupby('code').cumsum() # 每次为True重新标记分组
+                    self.market[code] = (self.cal_factor(exp[0]).groupby(['code', groups]).\
+                        cumcount()+1).where(groups>0, 999)     # 每个分组
             elif exp[1] in ['MA', 'EMA', 'Std', 'Sum', 'Zscore']: # 时序计算一元单参数 长度为3
                 self.market[code] = FB.my_pd.cal_ts(self.cal_factor(exp[0]), exp[1], int(exp[2]))
             elif exp[1] in ['corr', ]: # 复杂时序计算,二元单参数 长度为4 vol-corr-close-120 120日量价相关性
@@ -42,7 +57,7 @@ class Factor():
                      np.sqrt(FB.my_pd.cal_ts(deltay**2, 'Sum', int(exp[3]))))).fillna(0)
             # 返回计算因子
             if code in self.market.columns:
-                return self.market[code] 
+                return self.market[code]
             else:
                 print('failed cal')
     # 计算/引用基础因子
@@ -95,7 +110,7 @@ class Factor():
                             pd.Series(np.where(ifcloseuplimit, '+', np.where(ifclosedownlimit, '-', 0)), index=self.market.index) # 开盘+盘中+收盘
             self.market[code] = get_PriceLimit() 
         ##############################################################################
-        ########################### 公告 announcements ##################################
+        ####################### 公告（bool） announcements ############################
         ##############################################################################
         elif key=='special_type':
             def get_special_type(name):
@@ -108,34 +123,16 @@ class Factor():
                 else:
                     return 'Normal'
             self.market[code] = self.cal_factor('name').map(lambda x: get_special_type(x))
-        elif key=='times':   # times.a.d 最近d日公告a的次数 d
-            self.market[code] = self.cal_factor(para[0])
-        elif key=='days':   # days.a 距离上次为True天数
-            dayscode = self.market[self.cal_factor(para[0])][[]].reset_index()
-            dayscode['anndate'] = dayscode['date']
-            alldayscode = self.market[[]].reset_index()
-            days = alldayscode.merge(dayscode, on=['date', 'code'], how='left')
-            days = days.set_index(['date', 'code']).groupby('code')['anndate'].ffill()
-            days = days.reset_index()
-            days[code] = ((days['date']-days['anndate']).dt.days+1).fillna(999)
-            self.market[code] = days.set_index(['date', 'code'])[code]
-        elif key=='tradedays':
-            alltradeday = self.market.index.get_level_values(0).unique()
-            def count_tradedays(start, end):
-                if (start not in alltradeday)|(end not in alltradeday):
-                    return np.nan
-                start_index = np.searchsorted(alltradeday, start, side='left')
-                end_index = np.searchsorted(alltradeday, end, side='right')
-                return end_index-start_index  # 第一天为1
-            dayscode = self.market[self.cal_factor(para[0])][[]].reset_index()
-            dayscode['anndate'] = dayscode['date']
-            alldayscode = self.market[[]].reset_index()
-            days = alldayscode.merge(dayscode, on=['date', 'code'], how='left')
-            days = days.set_index(['date', 'code']).groupby('code')['anndate'].ffill()
-            days = days.reset_index()
-            days[code] = np.vectorize(count_tradedays)(days['anndate'], days['date'])
-            self.market[code] = days.set_index(['date', 'code'])[code].fillna(999)
-        ##############################################################################
+            #alltradeday = self.market.index.get_level_values(0).unique()
+            #dayscode = self.market[self.cal_factor(para[0])][[]].reset_index()
+            #dayscode['anndate'] = dayscode['date']   # 公告日
+            #alldayscode = self.market[[]].reset_index()
+            #days = alldayscode.merge(dayscode, on=['date', 'code'], how='left')
+            #days = days.set_index(['date', 'code']).groupby('code')['anndate'].ffill()
+            #self.market[code] = pd.Series(np.where(days.isna(), 999, \
+            #    1+np.searchsorted(alltradeday, days.reset_index()['date'], side='left')-\
+            #    np.searchsorted(alltradeday, days.values, side='left')), index=days.index)
+        ###############################################################################
         ################################ 市值 Cap ##################################
         ##############################################################################
         elif key=='Cap':
