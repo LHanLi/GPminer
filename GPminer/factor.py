@@ -123,15 +123,32 @@ class Factor():
                 else:
                     return 'Normal'
             self.market[code] = self.cal_factor('name').map(lambda x: get_special_type(x))
-            #alltradeday = self.market.index.get_level_values(0).unique()
-            #dayscode = self.market[self.cal_factor(para[0])][[]].reset_index()
-            #dayscode['anndate'] = dayscode['date']   # 公告日
-            #alldayscode = self.market[[]].reset_index()
-            #days = alldayscode.merge(dayscode, on=['date', 'code'], how='left')
-            #days = days.set_index(['date', 'code']).groupby('code')['anndate'].ffill()
-            #self.market[code] = pd.Series(np.where(days.isna(), 999, \
-            #    1+np.searchsorted(alltradeday, days.reset_index()['date'], side='left')-\
-            #    np.searchsorted(alltradeday, days.values, side='left')), index=days.index)
+        elif key=='status':   # status.a.d  某类型状态，重置时间周期
+            if self.type=='bond':
+                if para[0]=='下修':   # 下修公告前20日均价指的是20日的VWAP
+                    self.market[code] = pd.Series(np.select([(self.cal_factor('提示下修-tradedays')<self.cal_factor('提议下修-tradedays'))&\
+                                        (self.cal_factor('提示下修-tradedays')<self.cal_factor('下修-tradedays'))&\
+                                        (self.cal_factor('提示下修-tradedays')<self.cal_factor('不下修-tradedays'))&(self.cal_factor('提示下修-tradedays')<int(para[1])),\
+                                        (self.cal_factor('提议下修-tradedays')<self.cal_factor('提示下修-tradedays'))&\
+                                        (self.cal_factor('提议下修-tradedays')<self.cal_factor('下修-tradedays'))&\
+                                        (self.cal_factor('提议下修-tradedays')<self.cal_factor('不下修-tradedays'))&(self.cal_factor('提议下修-tradedays')<int(para[1])),\
+                                        (self.cal_factor('下修-tradedays')<self.cal_factor('提示下修-tradedays'))&\
+                                        (self.cal_factor('下修-tradedays')<self.cal_factor('提议下修-tradedays'))&\
+                                        (self.cal_factor('下修-tradedays')<self.cal_factor('不下修-tradedays'))&(self.cal_factor('下修-tradedays')<int(para[1])),\
+                                        (self.cal_factor('不下修-tradedays')<self.cal_factor('提示下修-tradedays'))&\
+                                        (self.cal_factor('不下修-tradedays')<self.cal_factor('提议下修-tradedays'))&\
+                                        (self.cal_factor('不下修-tradedays')<self.cal_factor('下修-tradedays'))&(self.cal_factor('不下修-tradedays')<int(para[1]))], \
+                                        ['提示下修', '提议下修', '下修', '不下修']), index=self.market.index).replace('0', np.nan).\
+                                            astype('object').groupby('code').fillna('空')
+                elif para[0]=='强赎':
+                    self.market[code] = pd.Series(np.select([(self.cal_factor('提示强赎-tradedays')<self.cal_factor('强赎-tradedays'))&\
+                                        (self.cal_factor('提示强赎-tradedays')<self.cal_factor('不强赎-tradedays'))&(self.cal_factor('提示强赎-tradedays')<int(para[1])),\
+                                        (self.cal_factor('强赎-tradedays')<self.cal_factor('提示强赎-tradedays'))&\
+                                        (self.cal_factor('强赎-tradedays')<self.cal_factor('不强赎-tradedays')),\
+                                        (self.cal_factor('不强赎-tradedays')<self.cal_factor('提示强赎-tradedays'))&\
+                                        (self.cal_factor('不强赎-tradedays')<self.cal_factor('强赎-tradedays'))&(self.cal_factor('不强赎-tradedays')<int(para[1]))], \
+                                        ['提示强赎', '强赎', '不强赎']), index=self.market.index).replace('0', np.nan).\
+                                            astype('object').groupby('code').fillna('空')
         ###############################################################################
         ################################ 市值 Cap ##################################
         ##############################################################################
@@ -297,9 +314,11 @@ class Factor():
                 d2 = (np.log(S/K) + (r - 0.5*sigma**2)*T)/(sigma * np.sqrt(T))
 
                 if option == 'call':
-                    theta = -S*sigma*(np.exp(-d1**2/2)/(np.sqrt(2*math.pi)))/(2*np.sqrt(T)) - r*K*np.exp(-r*T)*norm.cdf(d2)
+                    theta = -S*sigma*(np.exp(-d1**2/2)/(np.sqrt(2*math.pi)))/(2*np.sqrt(T)) \
+                        - r*K*np.exp(-r*T)*norm.cdf(d2)
                 elif option == 'put':
-                    theta = -S*sigma*(np.exp(-d1**2/2)/(np.sqrt(2*math.pi)))/(2*np.sqrt(T)) + r*K*np.exp(-r*T)*norm.cdf(-d2)
+                    theta = -S*sigma*(np.exp(-d1**2/2)/(np.sqrt(2*math.pi)))/(2*np.sqrt(T)) \
+                        + r*K*np.exp(-r*T)*norm.cdf(-d2)
                 return theta
             self.market[code] = Theta(self.cal_factor('Pc'), self.cal_factor('hold_money'),\
                 self.cal_factor('last_tradedays'), self.cal_factor('Ret-Std-%s'%para[1]),\
@@ -358,9 +377,13 @@ class Factor():
         ##############################################################################
         ################################ 价格因子 price ##############################
         ##############################################################################
-        elif key=='vwap': 
-            self.market[code] = (self.cal_factor('amount')/self.cal_factor('vol')).\
-                fillna(self.market['close'])
+        elif key=='vwap':    # vwap.d d日均价（不定义则为1） 
+            if para==[]:
+                self.market[code] = (self.cal_factor('amount')/self.cal_factor('vol')).\
+                    fillna(self.market['close'])
+            else:
+                self.market[code] = FB.my_pd.cal_ts(self.cal_factor('amount'), 'Sum', int(para[0]))\
+                            /FB.my_pd.cal_ts(self.cal_factor('vol'), 'Sum', int(para[0]))
         elif key=='exfactor':    # 复权因子
             exfactor = self.cal_factor('close').groupby('code').shift()/\
                 self.cal_factor('pre_close')
@@ -430,14 +453,18 @@ class Factor():
         ########################### 波动率 volatility ################################
         ##############################################################################
         elif key=='AMP':   # 振幅   AMP.d
-            exhigh_Max = FB.my_pd.cal_ts(self.cal_factor('ex_high'), 'Max', int(para[0]))
-            exlow_Min = FB.my_pd.cal_ts(self.cal_factor('ex_low'), 'Min', int(para[0]))
+            if para==[]:
+                exhigh_Max = FB.my_pd.cal_ts(self.cal_factor('ex_high'), 'Max', 1)
+                exlow_Min = FB.my_pd.cal_ts(self.cal_factor('ex_low'), 'Min', 1)
+            else:
+                exhigh_Max = FB.my_pd.cal_ts(self.cal_factor('ex_high'), 'Max', int(para[0]))
+                exlow_Min = FB.my_pd.cal_ts(self.cal_factor('ex_low'), 'Min', int(para[0]))
             self.market[code] = (exhigh_Max - exlow_Min)/exlow_Min
         elif key=='TR':    # 真实波动
             self.market[code] = pd.concat([self.cal_factor('high')-self.cal_factor('low'),\
                 abs(self.cal_factor('pre_close')-self.cal_factor('high')), \
                 abs(self.cal_factor('pre_close')-self.cal_factor('low'))], axis=1).max(axis=1) 
-        elif key=='UpTimes':      # UpTimes.a.d 过去d日涨幅超过a%天数
+        elif key=='UpTimes':      # UpTimes.a.d 过去d日涨幅超过a%天数   ifUp.a
             self.market[code] = FB.my_pd.cal_ts((self.cal_factor('highRet')>float(para[0])/100),\
                                         'Sum', int(para[1]))
         elif key=='DownTimes':      # *.a.d 过去d日最大跌幅超过a%天数
@@ -499,17 +526,17 @@ class Factor():
             self.market['alpha.'+para[0]] = MAy-self.cal_factor('beta.'+para[0])*MAx
             self.market['e.'+para[0]] = self.cal_factor('Ret')-(self.cal_factor('beta.'+para[0])*\
                 self.cal_factor('meanRet')+self.cal_factor('alpha.'+para[0])) 
-        elif key in ['cbeta', 'calpha', 'ce']:    # CAMP理论 beta/alpha/estd  beta.d
-            # 计算市场平均收益
-            MAx = FB.my_pd.cal_ts(self.cal_factor('meanRet'), 'MA', int(para[0]))
-            deltax = self.cal_factor('meanRet')-MAx
-            MAy = FB.my_pd.cal_ts(self.cal_factor('correctRet'), 'MA', int(para[0])) 
-            deltay = self.cal_factor('correctRet')-MAy
-            self.market['cbeta.'+para[0]] = FB.my_pd.cal_ts(deltax*deltay, 'Sum', int(para[0]))\
-                /FB.my_pd.cal_ts(deltax**2, 'Sum', int(para[0]))
-            self.market['calpha.'+para[0]] = MAy-self.cal_factor('cbeta.'+para[0])*MAx
-            self.market['ce.'+para[0]] = self.cal_factor('Ret')-(self.cal_factor('cbeta.'+para[0])*\
-                self.cal_factor('meanRet')+self.cal_factor('calpha.'+para[0]))
+        #elif key in ['cbeta', 'calpha', 'ce']:    # CAMP理论 beta/alpha/estd  beta.d
+        #    # 计算市场平均收益
+        #    MAx = FB.my_pd.cal_ts(self.cal_factor('meanRet'), 'MA', int(para[0]))
+        #    deltax = self.cal_factor('meanRet')-MAx
+        #    MAy = FB.my_pd.cal_ts(self.cal_factor('correctRet'), 'MA', int(para[0])) 
+        #    deltay = self.cal_factor('correctRet')-MAy
+        #    self.market['cbeta.'+para[0]] = FB.my_pd.cal_ts(deltax*deltay, 'Sum', int(para[0]))\
+        #        /FB.my_pd.cal_ts(deltax**2, 'Sum', int(para[0]))
+        #    self.market['calpha.'+para[0]] = MAy-self.cal_factor('cbeta.'+para[0])*MAx
+        #    self.market['ce.'+para[0]] = self.cal_factor('Ret')-(self.cal_factor('cbeta.'+para[0])*\
+        #        self.cal_factor('meanRet')+self.cal_factor('calpha.'+para[0]))
         ##############################################################################
         ############################### 相关性算子 corr ###############################
         ##############################################################################
