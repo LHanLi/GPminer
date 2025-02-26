@@ -62,7 +62,7 @@ class Factor():
                 return self.market[code]
             else:
                 print('failed cal')
-    def add(self, df):  # 向market中加入正股因子（或命名重叠） df中全为要添加元素字段
+    def add_stk(self, df_stocks):  # 向market中加入正股因子（或命名重叠） df中全为要添加元素字段
         def get_name(name):
             exp = name.split('-')
             if len(exp)==1:
@@ -76,7 +76,9 @@ class Factor():
             else:
                 print('不规范命名')
                 return '@'+name+'@'
-        
+        df_stocks = df_stocks.loc[:, list(self.market['stock_code'].unique()), :]
+        self.market = self.market.reset_index().merge(df_stocks.rename(columns={i:get_name(i) for i in df_stocks.columns}).\
+                reset_index().rename(columns={'code':'stock_code'}), on=['stock_code', 'date']).set_index(['date', 'code']) 
     # 计算/引用基础因子
     def cal_basic_factor(self, code):
         # 因子分解为因子名和参数
