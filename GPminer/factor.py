@@ -30,7 +30,7 @@ class Factor():
             exp = code.split('-')
             if len(exp)==1:  # 基础因子
                 self.cal_basic_factor(code)
-            elif exp[1] in ['days', 'tradedays']: # 一元无参数 长度为2
+            elif (len(exp)==2)&(exp[1] in ['days', 'tradedays']): # 一元无参数 长度为2
                 if exp[1]=='days':   # days.a 距离上次a为True天数
                     dayscode = self.market[self.cal_factor(exp[0])][[]].reset_index()
                     dayscode['anndate'] = dayscode['date']
@@ -45,9 +45,9 @@ class Factor():
                     groups = mask.groupby('code').cumsum() # 每次为True重新标记分组
                     self.market[code] = (self.cal_factor(exp[0]).groupby(['code', groups]).\
                         cumcount()+1).where(groups>0, 999)     # 每个分组
-            elif exp[1] in ['MA', 'EMA', 'Std', 'Sum', 'Zscore']: # 时序计算一元单参数 长度为3
+            elif (len(exp)==3)&(exp[1] in ['MA', 'EMA', 'Std', 'Sum', 'Zscore']): # 时序计算一元单参数 长度为3
                 self.market[code] = FB.my_pd.cal_ts(self.cal_factor(exp[0]), exp[1], int(exp[2]))
-            elif exp[1] in ['corr', ]: # 复杂时序计算,二元单参数 长度为4 vol-corr-close-120 120日量价相关性
+            elif (len(exp)==4)&(exp[1] in ['corr', ]): # 复杂时序计算,二元单参数 长度为4 vol-corr-close-120 120日量价相关性
                 deltax = self.cal_factor(exp[0])-\
                     FB.my_pd.cal_ts(self.cal_factor(exp[0]), 'MA', int(exp[3]))
                 deltay = self.cal_factor(exp[2])-\
@@ -55,11 +55,28 @@ class Factor():
                 self.market[code] = (FB.my_pd.cal_ts((deltax*deltay), 'Sum', int(exp[3]))/\
                     (np.sqrt(FB.my_pd.cal_ts(deltax**2, 'Sum', int(exp[3])))*\
                      np.sqrt(FB.my_pd.cal_ts(deltay**2, 'Sum', int(exp[3]))))).fillna(0)
+            else:
+                print('not fund TS operation', code)    # 带有-的未定义时序因子
             # 返回计算因子
             if code in self.market.columns:
                 return self.market[code]
             else:
                 print('failed cal')
+    def add(self, df):  # 向market中加入正股因子（或命名重叠） df中全为要添加元素字段
+        def get_name(name):
+            exp = name.split('-')
+            if len(exp)==1:
+                return '@'+name+'@'
+            elif (len(exp)==2)&(exp[1] in ['days', 'tradedays']):
+                return '@'+exp[0]+'@-'+exp[1]
+            elif (len(exp)==3)&(exp[1] in ['MA', 'EMA', 'Std', 'Sum', 'Zscore']): 
+                return '@'+exp[0]+'@-'+exp[1]+'-'+exp[2]
+            elif (len(exp)==4)&(exp[1] in ['corr', ]):
+                return '@'+exp[0]+'@-'+exp[1]+'-@'+exp[2]+'@-'+exp[3]
+            else:
+                print('不规范命名')
+                return '@'+name+'@'
+        
     # 计算/引用基础因子
     def cal_basic_factor(self, code):
         # 因子分解为因子名和参数
