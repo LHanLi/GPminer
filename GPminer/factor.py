@@ -47,11 +47,11 @@ class Factor():
                         cumcount()+1).where(groups>0, 999)     # 每个分组
             elif (len(exp)==3)&(exp[1] in ['MA', 'EMA', 'Std', 'Sum', 'Zscore']): # 时序计算一元单参数 长度为3
                 self.market[code] = FB.my_pd.cal_ts(self.cal_factor(exp[0]), exp[1], int(exp[2]))
-            elif (len(exp)==4)&(exp[1] in ['corr', ]): # 复杂时序计算,二元单参数 长度为4 vol-corr-close-120 120日量价相关性
-                deltax = self.cal_factor(exp[0])-\
-                    FB.my_pd.cal_ts(self.cal_factor(exp[0]), 'MA', int(exp[3]))
-                deltay = self.cal_factor(exp[2])-\
-                    FB.my_pd.cal_ts(self.cal_factor(exp[2]), 'MA', int(exp[3]))
+            elif (len(exp)==4)&(exp[1] in ['corr', 'slope', 'intercept', 'epsilon']): # 复杂时序计算,二元单参数 长度为4 
+                MAx = FB.my_pd.cal_ts(self.cal_factor(exp[0]), 'MA', int(exp[3]))
+                deltax = self.cal_factor(exp[0])-MAx
+                MAy = FB.my_pd.cal_ts(self.cal_factor(exp[2]), 'MA', int(exp[3])) 
+                deltay = self.cal_factor(exp[2])-MAy
                 if exp[1]=='corr':
                     self.market[code] = (FB.my_pd.cal_ts((deltax*deltay), 'Sum', int(exp[3]))/\
                         (np.sqrt(FB.my_pd.cal_ts(deltax**2, 'Sum', int(exp[3])))*\
@@ -60,7 +60,13 @@ class Factor():
                     self.market[code] = FB.my_pd.cal_ts(deltax*deltay, 'Sum', \
                             int(exp[3]))/FB.my_pd.cal_ts(deltax**2, 'Sum', int(exp[3]))
                 elif exp[1]=='intercept':
-                    return 0 
+                    self.market[code] = MAy-(FB.my_pd.cal_ts(deltax*deltay, 'Sum', \
+                            int(exp[3]))/FB.my_pd.cal_ts(deltax**2, 'Sum', int(exp[3])))*MAx
+                elif exp[1]=='epsilon':
+                    self.market[code] = self.cal_factor(exp[2])-(MAy-(FB.my_pd.cal_ts(deltax*deltay, \
+                        'Sum', int(exp[3]))/FB.my_pd.cal_ts(deltax**2, 'Sum', int(exp[3])))*MAx)*self.cal_factor(exp[0])\
+                            -(MAy-(FB.my_pd.cal_ts(deltax*deltay, 'Sum', \
+                            int(exp[3]))/FB.my_pd.cal_ts(deltax**2, 'Sum', int(exp[3])))*MAx)
             else:
                 print('not fund TS operation', code)    # 带有-的未定义时序因子
             # 返回计算因子
@@ -599,3 +605,5 @@ class Factor():
         ##############################################################################
         if code not in self.market.columns:
             print('warning! not basic factor %s'%code)
+
+
