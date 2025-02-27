@@ -45,7 +45,7 @@ class Factor():
                     groups = mask.groupby('code').cumsum() # 每次为True重新标记分组
                     self.market[code] = (self.cal_factor(exp[0]).groupby(['code', groups]).\
                         cumcount()+1).where(groups>0, 999)     # 每个分组
-            elif (len(exp)==3)&(exp[1] in ['MA', 'EMA', 'Std', 'Sum', 'Zscore']): # 时序计算一元单参数 长度为3
+            elif (len(exp)==3)&(exp[1] in ['MA', 'EMA', 'Std', 'Skew', 'Sum', 'Zscore']): # 时序计算一元单参数 长度为3
                 self.market[code] = FB.my_pd.cal_ts(self.cal_factor(exp[0]), exp[1], int(exp[2]))
             elif (len(exp)==4)&(exp[1] in ['corr', 'slope', 'intercept', 'epsilon']): # 复杂时序计算,二元单参数 长度为4 
                 MAx = FB.my_pd.cal_ts(self.cal_factor(exp[0]), 'MA', int(exp[3]))
@@ -175,7 +175,7 @@ class Factor():
                     self.market[code] = pd.Series(np.select([(self.cal_factor('提示强赎-tradedays')<self.cal_factor('强赎-tradedays'))&\
                                         (self.cal_factor('提示强赎-tradedays')<self.cal_factor('不强赎-tradedays'))&(self.cal_factor('提示强赎-tradedays')<int(para[1])),\
                                         (self.cal_factor('强赎-tradedays')<self.cal_factor('提示强赎-tradedays'))&\
-                                        (self.cal_factor('强赎-tradedays')<self.cal_factor('不强赎-tradedays')),\
+                                        (self.cal_factor('强赎-tradedays')<self.cal_factor('不强赎-tradedays'))&(self.cal_factor('强赎-tradedays')<int(para[1])),\
                                         (self.cal_factor('不强赎-tradedays')<self.cal_factor('提示强赎-tradedays'))&\
                                         (self.cal_factor('不强赎-tradedays')<self.cal_factor('强赎-tradedays'))&(self.cal_factor('不强赎-tradedays')<int(para[1]))], \
                                         ['提示强赎', '强赎', '不强赎']), index=self.market.index).replace('0', np.nan).\
