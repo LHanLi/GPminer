@@ -52,9 +52,15 @@ class Factor():
                     FB.my_pd.cal_ts(self.cal_factor(exp[0]), 'MA', int(exp[3]))
                 deltay = self.cal_factor(exp[2])-\
                     FB.my_pd.cal_ts(self.cal_factor(exp[2]), 'MA', int(exp[3]))
-                self.market[code] = (FB.my_pd.cal_ts((deltax*deltay), 'Sum', int(exp[3]))/\
-                    (np.sqrt(FB.my_pd.cal_ts(deltax**2, 'Sum', int(exp[3])))*\
-                     np.sqrt(FB.my_pd.cal_ts(deltay**2, 'Sum', int(exp[3]))))).fillna(0)
+                if exp[1]=='corr':
+                    self.market[code] = (FB.my_pd.cal_ts((deltax*deltay), 'Sum', int(exp[3]))/\
+                        (np.sqrt(FB.my_pd.cal_ts(deltax**2, 'Sum', int(exp[3])))*\
+                        np.sqrt(FB.my_pd.cal_ts(deltay**2, 'Sum', int(exp[3]))))).fillna(0)
+                elif exp[1]=='slope':
+                    self.market[code] = FB.my_pd.cal_ts(deltax*deltay, 'Sum', \
+                            int(exp[3]))/FB.my_pd.cal_ts(deltax**2, 'Sum', int(exp[3]))
+                elif exp[1]=='intercept':
+                    return 0 
             else:
                 print('not fund TS operation', code)    # 带有-的未定义时序因子
             # 返回计算因子
@@ -74,7 +80,7 @@ class Factor():
             elif (len(exp)==4)&(exp[1] in ['corr', ]):
                 return '@'+exp[0]+'@-'+exp[1]+'-@'+exp[2]+'@-'+exp[3]
             else:
-                print('不规范命名')
+                print('不规范命名', name)
                 return '@'+name+'@'
         df_stocks = df_stocks.loc[:, list(self.market['stock_code'].unique()), :]
         self.market = self.market.reset_index().merge(df_stocks.rename(columns={i:get_name(i) for i in df_stocks.columns}).\
@@ -393,6 +399,11 @@ class Factor():
             elif para[0]=='put':
                 self.market[code] = self.cal_factor('close')/\
                     (self.cal_factor('Pc')+self.cal_factor('put.'+para[1]))-1 
+        
+        #==============================================================================# 
+        #============================= 量价因子 =========================================# 
+        #==============================================================================# 
+        
         ##############################################################################
         ################################ 价格因子 price ##############################
         ##############################################################################
@@ -449,7 +460,7 @@ class Factor():
             sumdown = FB.my_pd.cal_ts(down, 'Sum', int(para[0]))
             rsi = sumup/(sumup+sumdown)
             self.market[code] = rsi
-        elif key=='RSRS':        # high/low 回归斜率  RSRS.d
+        elif key=='RSRS':        # high/low 回归斜率  RSRS.d       ex_low-beta-ex_high-d
             deltax = self.cal_factor('ex_low')-FB.my_pd.cal_ts(self.cal_factor('ex_low'), \
                                                                 'MA', int(para[0]))
             deltay = self.cal_factor('ex_high')-FB.my_pd.cal_ts(self.cal_factor('ex_high'), \
@@ -483,6 +494,18 @@ class Factor():
             self.market[code] = pd.concat([self.cal_factor('high')-self.cal_factor('low'),\
                 abs(self.cal_factor('pre_close')-self.cal_factor('high')), \
                 abs(self.cal_factor('pre_close')-self.cal_factor('low'))], axis=1).max(axis=1) 
+        elif key=='ifUp': # ifUp.a
+            self.market[code] = self.cal_factor('highRet')>(float(para[0])/100)
+        elif key=='ifDown':
+            self.market[code] = self.cal_factor('lowRet')<(float(para[0])/100)
+        elif key=='ifAMP':
+            self.market[code] = self.cal_factor('AMP')<(float(para[0])/100)
+        elif key=='ifLimit':
+            self.market[code] = self.cal_factor('PriceLimit').map(lambda x: ('+' in x)|('-' in x))
+        elif key=='ifDownLimit':
+            self.market[code] = self.cal_factor('PriceLimit').map(lambda x: ('-' in x))
+        elif key=='ifUpLimit':
+            self.market[code] = self.cal_factor('PriceLimit').map(lambda x: ('+' in x))
         elif key=='UpTimes':      # UpTimes.a.d 过去d日涨幅超过a%天数   ifUp.a
             self.market[code] = FB.my_pd.cal_ts((self.cal_factor('highRet')>float(para[0])/100),\
                                         'Sum', int(para[1]))
@@ -508,7 +531,7 @@ class Factor():
         elif key=='UnusualVol':    # 异常成交量  UnusualVol.d
             self.market[code] = self.cal_factor('vol')/self.cal_factor('vol-MA-'+para[0])-1
         ##############################################################################
-        ################################ 量价相关 corr ################################
+        ################################ 相关性 corr ################################
         ##############################################################################
         elif key in ['VolvwapCorr', 'VolAMPCorr', 'VolRetCorr']:  # 量价相关性   VolPriceCorr.d
             deltax = self.cal_factor('vol')-FB.my_pd.cal_ts(self.cal_factor('vol'), 'MA', int(para[0]))
@@ -556,21 +579,21 @@ class Factor():
         #    self.market['calpha.'+para[0]] = MAy-self.cal_factor('cbeta.'+para[0])*MAx
         #    self.market['ce.'+para[0]] = self.cal_factor('Ret')-(self.cal_factor('cbeta.'+para[0])*\
         #        self.cal_factor('meanRet')+self.cal_factor('calpha.'+para[0]))
-        ##############################################################################
-        ############################### 相关性算子 corr ###############################
-        ##############################################################################
-        #elif key=='corr':     # corr.a.b.d  a和b的d日相关性
-        elif key in ['VolvwapCorr', 'VolAMPCorr', 'VolRetCorr']:  # 量价相关性   VolPriceCorr.d
-            deltax = self.cal_factor('vol')-FB.my_pd.cal_ts(self.cal_factor('vol'), 'MA', int(para[0]))
-            if key=='VolvwapCorr':            
-                deltay = self.cal_factor('vwap')-FB.my_pd.cal_ts(self.cal_factor('vwap'), 'MA', int(para[0]))
-            elif key=='VolAMPCorr':
-                deltay = self.cal_factor('AMP.1')-FB.my_pd.cal_ts(self.cal_factor('AMP.1'), 'MA', int(para[0]))
-            elif key=='VolRetCorr':
-                deltay = self.cal_factor('Ret')-FB.my_pd.cal_ts(self.cal_factor('Ret'), 'MA', int(para[0]))
-            self.market[code] = (FB.my_pd.cal_ts((deltax*deltay), 'Sum', int(para[0]))/\
-                    (np.sqrt(FB.my_pd.cal_ts(deltax**2, 'Sum', int(para[0])))*\
-                     np.sqrt(FB.my_pd.cal_ts(deltay**2, 'Sum', int(para[0]))))).fillna(0)
+        ###############################################################################
+        ################################ 相关性算子 corr ###############################
+        ###############################################################################
+        ##elif key=='corr':     # corr.a.b.d  a和b的d日相关性
+        #elif key in ['VolvwapCorr', 'VolAMPCorr', 'VolRetCorr']:  # 量价相关性   VolPriceCorr.d
+        #    deltax = self.cal_factor('vol')-FB.my_pd.cal_ts(self.cal_factor('vol'), 'MA', int(para[0]))
+        #    if key=='VolvwapCorr':            
+        #        deltay = self.cal_factor('vwap')-FB.my_pd.cal_ts(self.cal_factor('vwap'), 'MA', int(para[0]))
+        #    elif key=='VolAMPCorr':
+        #        deltay = self.cal_factor('AMP.1')-FB.my_pd.cal_ts(self.cal_factor('AMP.1'), 'MA', int(para[0]))
+        #    elif key=='VolRetCorr':
+        #        deltay = self.cal_factor('Ret')-FB.my_pd.cal_ts(self.cal_factor('Ret'), 'MA', int(para[0]))
+        #    self.market[code] = (FB.my_pd.cal_ts((deltax*deltay), 'Sum', int(para[0]))/\
+        #            (np.sqrt(FB.my_pd.cal_ts(deltax**2, 'Sum', int(para[0])))*\
+        #             np.sqrt(FB.my_pd.cal_ts(deltay**2, 'Sum', int(para[0]))))).fillna(0)
         ##############################################################################
         ############################# 创新因子 fancy ################################
         ##############################################################################
