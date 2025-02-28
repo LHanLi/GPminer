@@ -45,8 +45,11 @@ class Factor():
                     groups = mask.groupby('code').cumsum() # 每次为True重新标记分组
                     self.market[code] = (self.cal_factor(exp[0]).groupby(['code', groups]).\
                         cumcount()+1).where(groups>0, 999)     # 每个分组
-            elif (len(exp)==3)&(exp[1] in ['MA', 'EMA', 'Std', 'Skew', 'Sum', 'Zscore']): # 时序计算一元单参数 长度为3
-                self.market[code] = FB.my_pd.cal_ts(self.cal_factor(exp[0]), exp[1], int(exp[2]))
+            elif (len(exp)==3)&(exp[1] in ['MA', 'EMA', 'Std', 'Skew', 'Sum', 'Zscore', 'dev']): # 时序计算一元单参数 长度为3
+                if exp[1] in ['MA', 'EMA', 'Std', 'Skew', 'Sum', 'Zscore']:
+                    self.market[code] = FB.my_pd.cal_ts(self.cal_factor(exp[0]), exp[1], int(exp[2]))
+                elif exp[1]=='dev':
+                    self.market[code] = self.cal_factor(exp[0])/FB.my_pd.cal_ts(self.cal_factor(exp[0]), 'MA', int(exp[2]))-1
             elif (len(exp)==4)&(exp[1] in ['corr', 'slope', 'intercept', 'epsilon']): # 复杂时序计算,二元单参数 长度为4 
                 MAx = FB.my_pd.cal_ts(self.cal_factor(exp[0]), 'MA', int(exp[3]))
                 deltax = self.cal_factor(exp[0])-MAx
@@ -89,8 +92,10 @@ class Factor():
                 print('不规范命名', name)
                 return '@'+name+'@'
         df_stocks = df_stocks.loc[:, list(self.market['stock_code'].unique()), :]
-        self.market = self.market.reset_index().merge(df_stocks.rename(columns={i:get_name(i) for i in df_stocks.columns}).\
-                reset_index().rename(columns={'code':'stock_code'}), on=['stock_code', 'date']).set_index(['date', 'code']) 
+        market = self.market[['stock_code']].reset_index().merge(df_stocks.reset_index().rename(columns={'code':'stock_code'}), \
+                                                on=['stock_code', 'date']).set_index(['date', 'code'])
+        for i in df_stocks.columns:
+            self.market[[get_name(i)]] = market[i] 
     # 计算/引用基础因子
     def cal_basic_factor(self, code):
         # 因子分解为因子名和参数
