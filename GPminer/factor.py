@@ -1,4 +1,5 @@
 import GPminer as GPm
+from scipy.optimize import curve_fit
 import pandas as pd
 import numpy as np
 import FreeBack as FB
@@ -82,7 +83,7 @@ class Factor():
     def add_stk(self, df_stocks):  # 向market中加入正股因子（或命名重叠） df中全为要添加元素字段
         cut = self.market[['stock_code']].reset_index().merge(df_stocks.reset_index().rename(columns={'code':'stock_code'}), \
                                 on=['stock_code', 'date']).set_index(['date', 'code']).drop(columns='stock_code')
-        cut = cut.reindex(self.market.index)
+        cut = cut.reindex(self.market.index).groupby('code').ffill()
         def get_name(name):
             exp = name.split('-')
             if len(exp)==1:
@@ -201,7 +202,7 @@ class Factor():
         elif key=='freeCap':
              self.market[code] = self.cal_factor('free_float_shares')*self.cal_factor('close')/1e8
         elif key=='Cap_ratio':
-            self.market[code] = self.cal_factor('Cap')/self.cal_factor('a_freeCap')
+            self.market[code] = self.cal_factor('Cap')/self.cal_factor('@freeCap@')
         ##############################################################################
         ####################### 财务数据 finance 股票专属 #############################
         ##############################################################################
@@ -281,9 +282,9 @@ class Factor():
         elif key=='remain_ratio':
             self.market[code] = self.cal_factor('balance')/self.cal_factor('init_balance')
         elif key=='balance_cash':
-            self.market[code] = self.cal_factor('balance')/self.cal_factor('a_现金')
+            self.market[code] = self.cal_factor('balance')/self.cal_factor('@现金@')
         elif key=='balance_asset':
-            self.market[code] = self.cal_factor('balance')/self.cal_factor('a_总资产')
+            self.market[code] = self.cal_factor('balance')/self.cal_factor('@总资产@')
         elif key=='hold_money':        # 持有到期获得现金（不包含中间利息
             def get_return_money(string):
                 try:
@@ -312,7 +313,20 @@ class Factor():
         elif key=='conv_prem':
             self.market[code] = self.cal_factor('close')/self.cal_factor('Pc')-1
         elif key=='correct_prem': # 修正溢价率 转股溢价率对转股价值回归的残差
-            self.market[code] = self.cal_factor('conv_prem')
+            def fitfunc(x, a, b):
+                return a*(x**b)
+            result = []
+            for d,g in self.market.groupby(level='date'):
+                x = g['Pc']
+                y = g['conv_prem']
+                params, _ = curve_fit(fitfunc, x, y, p0=[1, 1])  # 初始值设为a=1, b=1
+                a, b = params
+
+                # 计算预测值和残差
+                y_pred = fitfunc(x, a, b)
+                residuals = y - y_pred
+                result.append(residuals)
+            self.market[code] = pd.concat(result)
         elif key=='dblow':    # dblow.x 
             self.market[code] = self.cal_factor('conv_prem')*int(para[0])+self.cal_factor('close')
         elif key=='PcvB':    # 纯债转股溢价率
