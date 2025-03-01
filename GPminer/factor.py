@@ -11,6 +11,8 @@ import re, math
 # factor: 基础因子名， 如果有参数，用.分割
 # method：时序算符, period: 时序算符周期
 class Factor():
+    names_ts_opt = {2:['days', 'tradedays'], 3:['MA', 'EMA', 'Std', 'Skew', 'Sum', 'Zscore', 'dev'],\
+                    4:['corr', 'slope', 'intercept', 'epsilon']}
     # type: stock/bond/future/crypto
     def __init__(self, market, type='stock', issurance=None):
         self.market = market
@@ -78,24 +80,24 @@ class Factor():
             else:
                 print('failed cal')
     def add_stk(self, df_stocks):  # 向market中加入正股因子（或命名重叠） df中全为要添加元素字段
+        cut = self.market[['stock_code']].reset_index().merge(df_stocks.reset_index().rename(columns={'code':'stock_code'}), \
+                                on=['stock_code', 'date']).set_index(['date', 'code']).drop(columns='stock_code')
+        cut = cut.reindex(self.market.index)
         def get_name(name):
             exp = name.split('-')
             if len(exp)==1:
                 return '@'+name+'@'
             elif (len(exp)==2)&(exp[1] in ['days', 'tradedays']):
                 return '@'+exp[0]+'@-'+exp[1]
-            elif (len(exp)==3)&(exp[1] in ['MA', 'EMA', 'Std', 'Sum', 'Zscore']): 
+            elif (len(exp)==3)&(exp[1] in ['MA', 'EMA', 'Std', 'Skew', 'Sum', 'Zscore', 'dev']): 
                 return '@'+exp[0]+'@-'+exp[1]+'-'+exp[2]
-            elif (len(exp)==4)&(exp[1] in ['corr', ]):
+            elif (len(exp)==4)&(exp[1] in ['corr', 'slope', 'intercept', 'epsilon']):
                 return '@'+exp[0]+'@-'+exp[1]+'-@'+exp[2]+'@-'+exp[3]
             else:
                 print('不规范命名', name)
                 return '@'+name+'@'
-        df_stocks = df_stocks.loc[:, list(self.market['stock_code'].unique()), :]
-        market = self.market[['stock_code']].reset_index().merge(df_stocks.reset_index().rename(columns={'code':'stock_code'}), \
-                                                on=['stock_code', 'date']).set_index(['date', 'code'])
-        for i in df_stocks.columns:
-            self.market[[get_name(i)]] = market[i] 
+        for i in cut.columns:
+            self.market[get_name(i)] = cut[i]
     # 计算/引用基础因子
     def cal_basic_factor(self, code):
         # 因子分解为因子名和参数
@@ -305,7 +307,7 @@ class Factor():
         ######################### 期权数据 option 债券专属 ##############################
         ##############################################################################
         elif key=='Pc':
-             self.market[code] = self.cal_factor('a_close')*100/self.cal_factor('conversion')
+             self.market[code] = self.cal_factor('@close@')*100/self.cal_factor('conversion')
         elif key=='conv_prem':
             self.market[code] = self.cal_factor('close')/self.cal_factor('Pc')-1
         elif key=='dblow':    # dblow.x 
@@ -401,6 +403,7 @@ class Factor():
                         sigma_max = sigma_mid
                     diff = sigma_max - sigma_min
                 return sigma_mid
+            self.cal_factor('hold_money')
             self.market[code] = self.market.apply(lambda x: IV(x['close']-x['hold_money'],\
                 x['Pc'], x['hold_money'], x['last_tradedays'], option=para[0]), axis=1)
         elif key=='theory_prem':  # 理论溢价率  theory_prem.call.d
@@ -510,7 +513,7 @@ class Factor():
         elif key=='ifDown':
             self.market[code] = self.cal_factor('lowRet')<(float(para[0])/100)
         elif key=='ifAMP':
-            self.market[code] = self.cal_factor('AMP')<(float(para[0])/100)
+            self.market[code] = self.cal_factor('AMP')>(float(para[0])/100)
         elif key=='ifLimit':
             self.market[code] = self.cal_factor('PriceLimit').map(lambda x: ('+' in x)|('-' in x))
         elif key=='ifDownLimit':
