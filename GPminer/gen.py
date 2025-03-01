@@ -53,15 +53,6 @@ class Gen():
     def get_seeds(self, exclude=True, max_seeds=10000):
         GPm.ino.log('最大种子数量%s'%max_seeds)
         def seeds_Score(max_seeds):
-            #popu0 = GPm.popu.Population() 
-            ## 遍历单因子、双因子, 作为种子组合
-            #for i in self.score_basket:
-            #    popu0.add({GPm.ind.Score([[i, True, 1]]).code, GPm.ind.Score([[i, False, 1]]).code})
-            #for i,j in list(combinations(self.score_basket, 2)):
-            #    for b0 in [True, False]:
-            #        for b1 in [True, False]:
-            #            popu0.add(GPm.ind.Score([[i, b0, 1], [j, b1, 1]]).code)
-            #return popu0
             popu0 = GPm.popu.Population() 
             allseeds = ['1*%s*'%i+j for i in ['True', 'False'] for j in self.score_basket]
             if len(allseeds)>max_seeds:
@@ -119,46 +110,14 @@ class Gen():
             popu0.add(set(seeds))
             GPm.ino.log('生成%s Pool种子'%len(popu0.codes))
             return popu0 
-            ## 单因子组合
-            #for factor in self.pool_basket:
-            #    for threshold in self.para_space[factor][1]:
-            #        # 离散变量使用=
-            #        if self.para_space[factor][0]:
-            #            if exclude:
-            #                pool0 = GPm.ind.Pool([[], [['equal', factor, [threshold, ]]]])
-            #            else:
-            #                pool0 = GPm.ind.Pool([[['equal', factor, [threshold, ]]], []])
-            #            popu0.add(pool0.code)
-            #        else:
-            #            if exclude:
-            #                pool0 = GPm.ind.Pool([[], [['less', factor, threshold]]])
-            #            else:
-            #                pool0 = GPm.ind.Pool([[['less', factor, threshold]], []])
-            #            popu0.add(pool0.code)
-            #            if exclude:
-            #                pool0 = GPm.ind.Pool([[], [['greater', factor, threshold]]])
-            #            else:
-            #                pool0 = GPm.ind.Pool([[['greater', factor, threshold]], []])
-            #            popu0.add(pool0.code)
-            #popu0 = popu0.subset(int(0.1*len(popu0.codes)))
-            ## 两因子组合
-            #if exclude:
-            #    combos = [GPm.ind.Pool(i[0] + '|' + i[1][1:]).code \
-            #                     for i in combinations(popu0.codes, 2)]
-            #else:
-            #    combos = [GPm.ind.Pool(i[0][:-1] + '|' + i[1]).code \
-            #                     for i in combinations(popu0.codes, 2)]
-            #popu0.add(set(sample(combos, int(0.1*len(combos)))))
-            #popu0.add(set(combos))
-            #return popu0
         if self.popu.type==(GPm.ind.Score):
             return seeds_Score(max_seeds).codes
         # Pool和Pooland的code/exp是互通的
         elif  (self.popu.type==GPm.ind.Pooland) | (self.popu.type==(GPm.ind.Pool)):
             return seeds_Pool(max_seeds).codes
         elif self.popu.type==(GPm.ind.SP):
-            seeds_score = seeds_Score(int(np.sqrt(max_seeds))+1)
-            seeds_pool = seeds_Pool(int(np.sqrt(max_seeds))+1)
+            seeds_score = seeds_Score(int(np.sqrt(max_seeds))+10)
+            seeds_pool = seeds_Pool(int(np.sqrt(max_seeds))+10)
             mix = [i+'&'+j for i in seeds_score.codes for j in seeds_pool.codes]
             GPm.ino.log('生成%s SP种子'%len(mix))
             return set(sample(mix, max_seeds))
