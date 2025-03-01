@@ -97,7 +97,8 @@ class Factor():
                 print('不规范命名', name)
                 return '@'+name+'@'
         for i in cut.columns:
-            self.market[get_name(i)] = cut[i]
+            if get_name(i) not in self.market.columns:
+                self.market[get_name(i)] = cut[i]
     # 计算/引用基础因子
     def cal_basic_factor(self, code):
         # 因子分解为因子名和参数
