@@ -27,26 +27,28 @@ class Gen():
             self.popu = GPm.popu.Population(indtype)
         else:
             self.popu = popu0
-        # 初始化pool的参数域，需要输入market
-        if  (self.popu.type==GPm.ind.Pooland) | (self.popu.type==GPm.ind.Pool) |\
-            (self.popu.type==GPm.ind.SP):
-            if type(market)==type(None):
-                print('market is needed for Pool ind Gen!')
-                return 
-            self.para_space = {}
-            for factor in self.pool_basket:
-                # 数值因子，小于等于divide_n个数时全部因子值进入参数空间
-                divide_n = 100
-                if type(market[factor].iloc[0]) in [np.float64, np.int64, type(1.0), type(1)]:
-                    if len(market[factor].unique())>divide_n:
-                        self.para_space[factor] = (False, [market[factor].quantile(i) \
-                                    for i in np.linspace(0.01,0.99,divide_n)]) 
-                    else:  # 最大最小值去除
-                        self.para_space[factor] = (False, sorted(market[factor].unique())[1:-1]) 
-                else:
-                    self.para_space[factor] = (True, list(market[factor].unique())) 
-        # 排除无法比较的打分因子
-
+        #if  self.popu.type != GPm.ind.Score:
+            #(self.popu.type==GPm.ind.Pooland) | (self.popu.type==GPm.ind.Pool) |\
+            #(self.popu.type==GPm.ind.SP):
+        # 初始化因子的参数域，需要输入market
+        if type(market)==type(None):
+            print('market is needed for Pool ind Gen!')
+            return 
+        self.para_space = {}
+        #for factor in self.pool_basket:
+        for factor in list(set(self.pool_basket)|set(self.score_basket)):
+            # 数值因子，小于等于divide_n个数时全部因子值进入参数空间
+            divide_n = 100
+            if type(market[factor].iloc[0]) in [np.float64, np.int64, type(1.0), type(1)]:
+                if len(market[factor].unique())>divide_n:
+                    self.para_space[factor] = (False, [market[factor].quantile(i) \
+                                for i in np.linspace(0.01,0.99,divide_n)]) 
+                else:  # 最大最小值去除
+                    self.para_space[factor] = (False, sorted(market[factor].unique())[1:-1]) 
+            else:
+                self.para_space[factor] = (True, list(market[factor].unique())) 
+        # 打分因子只能是数值型因子
+        self.score_basket = [i for i in self.score_basket if not self.para_space[i][0]] 
     # 从basket中因子获得popu
     def get_seeds(self, exclude=True, max_seeds=10000):
         GPm.ino.log('最大种子数量%s'%max_seeds)
