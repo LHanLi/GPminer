@@ -81,9 +81,6 @@ class Factor():
             else:
                 print('failed cal')
     def add_stk(self, df_stocks):  # 向market中加入正股因子（或命名重叠） df中全为要添加元素字段
-        cut = self.market[['stock_code']].reset_index().merge(df_stocks.reset_index().rename(columns={'code':'stock_code'}), \
-                                on=['stock_code', 'date']).set_index(['date', 'code']).drop(columns='stock_code')
-        cut = cut.reindex(self.market.index).groupby('code').ffill()
         def get_name(name):
             exp = name.split('-')
             if len(exp)==1:
@@ -97,6 +94,12 @@ class Factor():
             else:
                 print('不规范命名', name)
                 return '@'+name+'@'
+        select = [i for i in df_stocks.columns if get_name(i) not in self.market.columns]
+        df_stocks = df_stocks[select]
+        cut = self.market[['stock_code']].reset_index().merge(df_stocks.reset_index().\
+                    rename(columns={'code':'stock_code'}), on=['stock_code', 'date']).\
+                        set_index(['date', 'code']).drop(columns='stock_code')
+        cut = cut.reindex(self.market.index).groupby('code').ffill()
         for i in cut.columns:
             if get_name(i) not in self.market.columns:
                 self.market[get_name(i)] = cut[i]
