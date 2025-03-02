@@ -65,7 +65,7 @@ class Miner():
                 self.gen0.multiply()
             self.seeds = list(self.gen0.popu.codes)
         GPm.ino.log('Miner对象初始化完成')
-    def run(self, pooltype='or'):
+    def run(self, pooltype='or', mutation_ratio=0.5):
         workfile = datetime.datetime.now().strftime("%m%d%H%M_%S_%f")+\
                             '_%s'%np.random.rand()
         t0 = time.time()
@@ -97,7 +97,7 @@ class Miner():
         for ind in init_seeds:
             popu0.add(ind) 
         gen0 = GPm.gen.Gen(score_basket=self.score_basket, pool_basket=self.pool_basket, market=self.market,\
-                            indtype=self.indtype, popu0=popu0)
+                            indtype=self.indtype, popu0=popu0, mutation_ratio=mutation_ratio)
         # 计算适应度
         def single(p):
             result = pd.DataFrame(columns=['return_total', 'return_annual', 'excess_annual',\
