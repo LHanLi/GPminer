@@ -5,13 +5,12 @@ import GPminer as GPm
 from itertools import combinations
 import time, copy
 
-mutation_ratio = 0.5  # 打分排除因子变异比例
 # 种群繁殖类
 
 class Gen():
-    # 因子库（针对score和pool可以单独指定因子库），种群，市场，种群的类型
+    # 因子库（针对score和pool可以单独指定因子库），种群，市场，种群的类型 打分排除因子变异比例(1表示只变异打分因子，0表示只变异排除因子)
     def __init__(self, basket=[], popu0=None, market=None, indtype=GPm.ind.Score,\
-                        score_basket=None, pool_basket=None):
+                        score_basket=None, pool_basket=None, mutation_ratio=0.5):
         if (score_basket==None)&(pool_basket==None):
             self.score_basket = self.pool_basket = self.basket = basket
         elif score_basket==None:
@@ -49,6 +48,7 @@ class Gen():
                 self.para_space[factor] = (True, list(market[factor].unique())) 
         # 打分因子只能是数值型因子
         self.score_basket = [i for i in self.score_basket if not self.para_space[i][0]] 
+        self.mutation_ratio = mutation_ratio
     # 从basket中因子获得popu
     def get_seeds(self, exclude=True, max_seeds=10000):
         GPm.ino.log('最大种子数量%s'%max_seeds)
@@ -226,7 +226,7 @@ class Gen():
             return new
         elif type(ind)==GPm.ind.SP:
             # 随机选打分因子/排除因子变异
-            if np.random.rand()<0.5:
+            if np.random.rand()<self.mutation_ratio:
                 score = self.mutation_d(ind.score)
                 return GPm.ind.SP(score.code+'&'+ind.pool.code)
             else:
@@ -279,7 +279,7 @@ class Gen():
             return new
         elif type(ind)==GPm.ind.SP:
             # 随机选打分因子/排除因子变异
-            if np.random.rand()<0.5:
+            if np.random.rand()<self.mutation_ratio:
                 score = self.mutation_and(ind.score)
                 return GPm.ind.SP(score.code+'&'+ind.pool.code)
             else:
@@ -327,7 +327,7 @@ class Gen():
             return type(ind)(exp)
         else:
             # 随机选打分因子/排除因子变异
-            if np.random.rand()<0.5:
+            if np.random.rand()<self.mutation_ratio:
                 score = self.mutation_replace(ind.score)
                 return GPm.ind.SP(score.code+'&'+ind.pool.code)
             else:
