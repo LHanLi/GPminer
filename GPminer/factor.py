@@ -12,7 +12,8 @@ import re, math
 # factor: 基础因子名， 如果有参数，用.分割
 # method：时序算符, period: 时序算符周期
 class Factor():
-    names_ts_opt = {2:['days', 'tradedays'], 3:['MA', 'EMA', 'Std', 'Skew', 'Sum', 'Zscore', 'dev'],\
+    names_ts_opt = {2:['days', 'tradedays'], \
+                    3:['MA', 'EMA', 'Std', 'Skew', 'Sum', 'Zscore', 'dev'],\
                     4:['corr', 'slope', 'intercept', 'epsilon']}
     # type: stock/bond/future/crypto
     def __init__(self, market, type='stock', issurance=None):
@@ -150,8 +151,8 @@ class Factor():
                     ifopenuplimit = self.cal_factor('open')+mindelta>self.cal_factor('pre_close')*(1+uplimit)
                     ifopendownlimit = self.cal_factor('open')-mindelta<self.cal_factor('pre_close')*(1-downlimit)
                     return pd.Series(np.where(ifopenuplimit, '+', np.where(ifopendownlimit, '-', 0)), index=self.market.index) +\
-                        pd.Series(np.where(((~ifopendownlimit)&(~ifclosedownlimit)&ifoncedownlimit)|ifalwaysdownlimit, '-', \
-                            np.where(((~ifopenuplimit)&(~ifcloseuplimit)&ifonceuplimit)|ifalwaysuplimit, '+', 0)), index=self.market.index) +\
+                        pd.Series(np.where((((~ifopendownlimit)&(~ifclosedownlimit)&ifoncedownlimit)|ifalwaysdownlimit), '-', \
+                            np.where((((~ifopenuplimit)&(~ifcloseuplimit)&ifonceuplimit)|ifalwaysuplimit), '+', 0)), index=self.market.index) +\
                             pd.Series(np.where(ifcloseuplimit, '+', np.where(ifclosedownlimit, '-', 0)), index=self.market.index) # 开盘+盘中+收盘
             self.market[code] = get_PriceLimit() 
         ##############################################################################
