@@ -143,13 +143,15 @@ class Factor():
                     downlimit = get_limit(False)
                     ifonceuplimit = self.cal_factor('high')+mindelta>self.cal_factor('pre_close')*(1+uplimit)
                     ifoncedownlimit = self.cal_factor('low')-mindelta<self.cal_factor('pre_close')*(1-downlimit)
+                    ifalwaysuplimit = self.cal_factor('low')+mindelta>self.cal_factor('pre_close')*(1+uplimit)
+                    ifalwaysdownlimit = self.cal_factor('high')-mindelta<self.cal_factor('pre_close')*(1-downlimit) 
                     ifcloseuplimit = self.cal_factor('close')+mindelta>self.cal_factor('pre_close')*(1+uplimit)
                     ifclosedownlimit = self.cal_factor('close')-mindelta<self.cal_factor('pre_close')*(1-downlimit)
                     ifopenuplimit = self.cal_factor('open')+mindelta>self.cal_factor('pre_close')*(1+uplimit)
                     ifopendownlimit = self.cal_factor('open')-mindelta<self.cal_factor('pre_close')*(1-downlimit)
                     return pd.Series(np.where(ifopenuplimit, '+', np.where(ifopendownlimit, '-', 0)), index=self.market.index) +\
-                        pd.Series(np.where((~ifopendownlimit)&(~ifclosedownlimit)&ifoncedownlimit, '-', \
-                            np.where((~ifopenuplimit)&(~ifcloseuplimit)&ifonceuplimit, '+', 0)), index=self.market.index) +\
+                        pd.Series(np.where(((~ifopendownlimit)&(~ifclosedownlimit)&ifoncedownlimit)|ifalwaysdownlimit, '-', \
+                            np.where(((~ifopenuplimit)&(~ifcloseuplimit)&ifonceuplimit)|ifalwaysuplimit, '+', 0)), index=self.market.index) +\
                             pd.Series(np.where(ifcloseuplimit, '+', np.where(ifclosedownlimit, '-', 0)), index=self.market.index) # 开盘+盘中+收盘
             self.market[code] = get_PriceLimit() 
         ##############################################################################
