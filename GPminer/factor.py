@@ -348,7 +348,7 @@ class Factor():
                     p = (K*np.exp(-r*T)*norm.cdf(-d2) - S*norm.cdf(-d1))
                 return p
             self.market[code] = BSM(self.cal_factor('Pc'), self.cal_factor('hold_money'),\
-                self.cal_factor('last_tradedays'), self.cal_factor('Ret-Std-%s'%para[0]),\
+                self.cal_factor('last_tradedays'), self.cal_factor('@Ret@-Std-%s'%para[0]),\
                     option=key)
         elif key=='delta':   # delta.call.d  # call
             def Delta(S, K, T, sigma, r=0, option='call'):
@@ -359,7 +359,7 @@ class Factor():
                     delta = norm.cdf(d1) - 1
                 return delta
             self.market[code] = Delta(self.cal_factor('Pc'), self.cal_factor('hold_money'),\
-                self.cal_factor('last_tradedays'), self.cal_factor('Ret-Std-%s'%para[1]),\
+                self.cal_factor('last_tradedays'), self.cal_factor('@Ret@-Std-%s'%para[1]),\
                     option=para[0])
         elif key=='Gamma':   # Gamma.d
             def Gamma(S, K, T, sigma, r=0):
@@ -368,7 +368,7 @@ class Factor():
                 gamma = (np.exp(-d1**2/2)/(np.sqrt(2*math.pi)))/(S*sigma*np.sqrt(T))
                 return gamma
             self.market[code] = Gamma(self.cal_factor('Pc'), self.cal_factor('hold_money'),\
-                self.cal_factor('last_tradedays'), self.cal_factor('Ret-Std-%s'%para[0]))
+                self.cal_factor('last_tradedays'), self.cal_factor('@Ret@-Std-%s'%para[0]))
         elif key=='Theta':    # Theta.call.d
             def Theta(S, K, T, sigma, r=0, option='call'):
                 d1 = (np.log(S/K) + (r + 0.5*sigma**2)*T)/(sigma*np.sqrt(T))
@@ -382,7 +382,7 @@ class Factor():
                         + r*K*np.exp(-r*T)*norm.cdf(-d2)
                 return theta
             self.market[code] = Theta(self.cal_factor('Pc'), self.cal_factor('hold_money'),\
-                self.cal_factor('last_tradedays'), self.cal_factor('Ret-Std-%s'%para[1]),\
+                self.cal_factor('last_tradedays'), self.cal_factor('@Ret@-Std-%s'%para[1]),\
                     option=para[0])
         elif key=='Vega':   # Vega.d
             def Vega(S, K, T, sigma, r=0):
@@ -390,7 +390,7 @@ class Factor():
                 vega = S*np.sqrt(T)*np.exp(-d1**2/2)/np.sqrt(2*math.pi)  
                 return vega
             self.market[code] = Vega(self.cal_factor('Pc'), self.cal_factor('hold_money'),\
-                self.cal_factor('last_tradedays'), self.cal_factor('Ret-Std-%s'%para[0]))
+                self.cal_factor('last_tradedays'), self.cal_factor('@Ret@-Std-%s'%para[0]))
         elif key=='IV':    # IV.call
             # 隐含波动率（可以为负值）,  P 期权价格
             def BSM(S, K, T, sigma, r=0, option='call'):
