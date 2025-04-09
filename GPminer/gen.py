@@ -9,19 +9,21 @@ import time, copy
 
 class Gen():
     # 因子库（针对score和pool可以单独指定因子库），种群，市场，种群的类型 打分排除因子变异比例(1表示只变异打分因子，0表示只变异排除因子)
-    def __init__(self, basket=[], popu0=None, market=None, indtype=GPm.ind.Score,\
-                        score_basket=None, pool_basket=None, mutation_ratio=0.5):
-        if (score_basket==None)&(pool_basket==None):
-            self.score_basket = self.pool_basket = self.basket = basket
-        elif score_basket==None:
-            self.score_basket = self.basket = basket
-            self.pool_basket = pool_basket
-        elif pool_basket==None:
-            self.pool_basket = self.basket = basket
-            self.score_basket = score_basket
-        else:
-            self.score_basket = score_basket
-            self.pool_basket = pool_basket
+    def __init__(self, popu0=None, market=None, indtype=GPm.ind.Score,\
+                        score_basket=[], pool_basket=[], mutation_ratio=0.5):
+        #if (type(score_basket)==type(None))&(type(pool_basket)==type(None)):
+        #    self.score_basket = self.pool_basket = self.basket = basket
+        #elif type(score_basket)==type(None):
+        #    self.score_basket = self.basket = basket
+        #    self.pool_basket = pool_basket
+        #elif type(pool_basket)==type(None):
+        #    self.pool_basket = self.basket = basket
+        #    self.score_basket = score_basket
+        #else:
+        #    self.score_basket = score_basket
+        #    self.pool_basket = pool_basket
+        self.score_basket = score_basket
+        self.pool_basket = pool_basket
         if popu0==None:
             self.popu = GPm.popu.Population(indtype)
         else:
@@ -34,11 +36,11 @@ class Gen():
             print('market is needed for Pool ind Gen!')
             return 
         self.para_space = {}
-        #for factor in self.pool_basket:
         for factor in list(set(self.pool_basket)|set(self.score_basket)):
             # 数值因子，小于等于divide_n个数时全部因子值进入参数空间
             divide_n = 100
-            if type(market[factor].iloc[0]) in [np.float64, np.int64, type(1.0), type(1)]:
+            if type(market[factor].iloc[0]) in \
+                [np.float32, np.float64, np.int64, type(1.0), type(1)]:
                 if len(market[factor].unique())>divide_n:
                     self.para_space[factor] = (False, [market[factor].quantile(i) \
                                 for i in np.linspace(0.01,0.99,divide_n)]) 
@@ -48,26 +50,32 @@ class Gen():
                 self.para_space[factor] = (True, list(market[factor].unique())) 
         # 打分因子只能是数值型因子
         self.score_basket = [i for i in self.score_basket if not self.para_space[i][0]] 
+        GPm.ino.log('非数值型因子无法作为打分因子,同时得到选股因子的阈值空间,最终得到%s个打分因子'\
+                    %(len(self.score_basket)))
         self.mutation_ratio = mutation_ratio
     # 从basket中因子获得popu
     def get_seeds(self, exclude=True, max_seeds=10000):
         GPm.ino.log('最大种子数量%s'%max_seeds)
         def seeds_Score(max_seeds):
             popu0 = GPm.popu.Population() 
-            allseeds = ['1*%s*'%i+j for i in ['True', 'False'] for j in self.score_basket]
+            allseeds = ['1*'+i+'*'+j for i in ['True', 'False'] for j in self.score_basket]
             if len(allseeds)>max_seeds:
-                #print('all onefactors')
                 seeds = sample(allseeds, max_seeds)
                 popu0.add(set(seeds))
-            else:
+                GPm.ino.log('生成单因子种子%s个,选取%s个作为种子'%(len(allseeds), max_seeds))
+            else:   # 如果单因子种子不够则再增加双因子组合
                 popu0.add(set(allseeds))
-                #print('add some twofactors')
+                GPm.ino.log(self.score_basket)
+                GPm.ino.log(allseeds)
+                GPm.ino.log('单因子数量为%s不足%s,增加双因子组合'%(len(allseeds), max_seeds))
                 allseeds = ['1*%s*'%a+i+'+'+'1*%s*'%b+j for i,j in \
-                    combinations(self.score_basket, 2) for a in ['True', 'False'] \
-                        for b in ['True', 'False']]
+                    combinations(sorted(self.score_basket, reverse=True), 2) \
+                        for a in ['True', 'False'] for b in ['True', 'False']]
+                GPm.ino.log('单因子种子数量不足,生成双因子种子%s个'%len(allseeds))
                 seeds = sample(allseeds, max_seeds-len(popu0.codes))
-                for s in seeds:     # 多因子需要调整顺序，得到唯一字符串
-                    popu0.add(GPm.ind.Score(s).code)
+                popu0.add(set(seeds))  # 已经提前排序,直接添加即可
+                #for s in seeds:     # 多因子需要调整顺序，得到唯一字符串
+                #    popu0.add(GPm.ind.Score(s).code)
             GPm.ino.log('生成%s Score种子'%len(popu0.codes))
             return popu0
         # 仅生成排除因子
