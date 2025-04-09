@@ -54,8 +54,10 @@ class Miner():
         self.gen0 = GPm.gen.Gen(score_basket=self.score_basket, pool_basket=self.pool_basket,\
                             market=self.market, indtype=self.indtype, popu0=popu0)
         if type(self.p0)==type(None):
+            GPm.ino.log('从头开始生成种子')
             self.seeds = list(self.gen0.get_seeds(exclude=exclude))
         else:
+            GPm.ino.log('从基础种子集合开始生成种子')
             if type(self.p0)==type(set()):
                 self.gen0.popu.add(self.p0)
             else:
@@ -70,14 +72,10 @@ class Miner():
                             '_%s'%np.random.rand()
         t0 = time.time()
         if type(self.p0)==type(None):
-            #init_seeds = sample(self.seeds, int(self.population_size/self.evolution_ratio))
             init_seeds = sample(self.seeds, int(self.population_size))
         elif type(self.p0)==type(set()):
-            #init_seeds = set(sample(self.seeds, int(self.population_size/self.evolution_ratio)))
             init_seeds = set(sample(self.seeds, int(self.population_size)))
         else:
-            #init_seeds = set(sample(self.seeds, int(self.population_size/self.evolution_ratio)-1))|\
-            #        {self.p0.code}
             init_seeds = set(sample(self.seeds, int(self.population_size)-1))|\
                     {self.p0.code}
         GPm.ino.log('生成%s个p作为初始种群'%len(init_seeds))
