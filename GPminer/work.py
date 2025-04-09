@@ -94,8 +94,9 @@ class Miner():
             eval0 = GPm.eval.Eval(self.market)
         for ind in init_seeds:
             popu0.add(ind) 
-        gen0 = GPm.gen.Gen(score_basket=self.score_basket, pool_basket=self.pool_basket, market=self.market,\
-                            indtype=self.indtype, popu0=popu0, mutation_ratio=mutation_ratio)
+        #gen0 = GPm.gen.Gen(score_basket=self.score_basket, pool_basket=self.pool_basket, market=self.market,\
+        #                    indtype=self.indtype, popu0=popu0, mutation_ratio=mutation_ratio)
+        self.gen0.popu = popu0
         # 计算适应度
         def single(p):
             result = pd.DataFrame(columns=['return_total', 'return_annual', 'excess_annual',\
@@ -190,7 +191,8 @@ class Miner():
                 os.rename(workfile, 'result-'+self.indtype(fitness_df.index[0]).short()+'-'+workfile)
                 break
             # 种群繁殖
-            gen0.multiply(1/self.evolution_ratio)
+            #gen0.multiply(1/self.evolution_ratio)
+            self.gen0.multiply(1/self.evolution_ratio)
             GPm.ino.log('交叉变异生成第%s代种群'%(g+1))
 
 
