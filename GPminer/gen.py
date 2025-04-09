@@ -71,7 +71,7 @@ class Gen():
                 popu0.add(set(allseeds))
                 GPm.ino.log('单因子数量为%s不足%s,增加双因子组合'%(len(allseeds), max_seeds))
                 allseeds = ['1*%s*'%a+i+'+'+'1*%s*'%b+j for i,j in \
-                    combinations(self.score_basket) \
+                        combinations(self.score_basket, 2) \
                         for a in ['True', 'False'] for b in ['True', 'False']]
                 allseeds = [GPm.ind.Score(s).code for s in allseeds]
                 GPm.ino.log('单因子种子数量不足,生成双因子种子%s个'%len(allseeds))
