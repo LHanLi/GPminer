@@ -191,7 +191,6 @@ class Miner():
                 #os.rename(workfile, 'result-'+self.indtype(fitness_df.index[0]).short()+'-'+workfile)
                 break
             # 种群繁殖
-            #gen0.multiply(1/self.evolution_ratio)
             self.gen0.multiply(1/self.evolution_ratio)
             GPm.ino.log('交叉变异生成第%s代种群'%(g+1))
 
