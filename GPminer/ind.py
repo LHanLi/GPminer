@@ -36,8 +36,8 @@ class Ind():
 # code:'2*False*a+1*True*b, exp:[[2, False, 'a'], [1, True, 'b']]
 # 2倍a因子越小越好+1倍b因子越大越好
 class Score(Ind):
-    max_exp_len = 10 # 最大因子数
-    max_mul = 50 # 最大因子系数          constant
+    max_exp_len = 1000 # 最大因子数
+    max_mul = 1000 # 最大因子系数          constant
     rankall = False # 池子外股票是否参与排序
     def code2exp(self):
         exp = []
@@ -121,7 +121,7 @@ class Score(Ind):
 # code：'a<130|b=A^B'  exp:[[['less', 'a', 130]], [['equal', 'b', ['A', 'B']]] 
 # ;前为include，后为exclude条件, 意为全部a<130的股票中排除掉b为A和B以及c大于C的股票。
 class Pool(Ind):
-    max_exp_len = 10 # 最大因子数
+    max_exp_len = 1000 # 最大因子数
     def code2exp(self):
         innex = self.code.split(';')
         final_exp = []
