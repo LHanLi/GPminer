@@ -53,17 +53,6 @@ class Score(Ind):
         self.score = self
     # 保证等价的表达式唯一
     def uexp(self):
-        #already = []
-        #shuffle(self.exp)  # 当因子重复出现时添加一些随机性
-        #for i in self.exp:
-        #    # 如果出现0或负值则直接跳过
-        #    if i[2]<=0:
-        #        continue
-        #    # 如果同一因子出现两次以上则只保留第一个
-        #    elif i[0] not in already:
-        #        already.append(i[0])
-        #        exp.append(i)
-
         # 如果因子重复出现，权重相加
         exp = {} # 存储每个factor的方向/权重
         for i in self.exp:
@@ -83,16 +72,15 @@ class Score(Ind):
         shuffle(exp)  # 截断需要随机性 
         exp = exp[:self.max_exp_len]
         # 除以最大公因数
-        ws = [i[2] for i in exp] 
+        ws = [i[2] for i in exp]
         smaller=int(min(ws))
         for i in reversed(range(1,smaller+1)):
             if list(filter(lambda j: j%i!=0,ws)) == []:
                 hcf = i
                 break
-        # 限制最大同时考虑等权情况
-        exp = [[i[0], i[1], min(i[2]/hcf, self.max_mul)] for i in exp]
+        exp = [[i[0], i[1], min(i[2]/hcf, self.max_mul)] for i in exp] # 限制最大乘数
         if max([i[2] for i in exp])==min([i[2] for i in exp]):
-            exp = [[i[0], i[1], 1] for i in exp]
+            exp = [[i[0], i[1], 1] for i in exp]    # 如果权重全部相同则为等权
         # 先按权重排序，再按因子名称排序，再按方向排序
         def takewsort(one):
             return one[::-1]
