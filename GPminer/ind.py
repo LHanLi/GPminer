@@ -37,7 +37,7 @@ class Ind():
 # 2倍a因子越小越好+1倍b因子越大越好
 class Score(Ind):
     max_exp_len = 1000 # 最大因子数
-    max_mul = 1000 # 最大因子系数          constant
+    max_mul = 10000 # 最大因子系数          constant
     rankall = False # 池子外股票是否参与排序
     def code2exp(self):
         exp = []
