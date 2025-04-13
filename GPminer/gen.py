@@ -12,17 +12,6 @@ class Gen():
     # 因子库（针对score和pool可以单独指定因子库），种群，市场，种群的类型 打分排除因子变异比例(1表示只变异打分因子，0表示只变异排除因子)
     def __init__(self, popu0=None, market=None, indtype=GPm.ind.Score,\
                         score_basket=[], pool_basket=[], mutation_ratio=0.5):
-        #if (type(score_basket)==type(None))&(type(pool_basket)==type(None)):
-        #    self.score_basket = self.pool_basket = self.basket = basket
-        #elif type(score_basket)==type(None):
-        #    self.score_basket = self.basket = basket
-        #    self.pool_basket = pool_basket
-        #elif type(pool_basket)==type(None):
-        #    self.pool_basket = self.basket = basket
-        #    self.score_basket = score_basket
-        #else:
-        #    self.score_basket = score_basket
-        #    self.pool_basket = pool_basket
         self.score_basket = score_basket
         self.pool_basket = pool_basket
         if popu0==None:
