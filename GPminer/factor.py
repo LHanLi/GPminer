@@ -294,7 +294,7 @@ class Factor():
         elif key=='hold_money':        # 持有到期获得现金（不包含中间利息
             def get_return_money(string):
                 try:
-                    n = int(re.findall("[0-9]*\.?[0-9]+", string)[-1])
+                    n = int(re.findall(r"[0-9]*\.?[0-9]+", string)[-1])
                     if n>100:
                         return n
                     else:
