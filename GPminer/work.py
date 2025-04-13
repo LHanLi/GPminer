@@ -96,6 +96,7 @@ class Miner():
             popu0.add(ind) 
         #gen0 = GPm.gen.Gen(score_basket=self.score_basket, pool_basket=self.pool_basket, market=self.market,\
         #                    indtype=self.indtype, popu0=popu0, mutation_ratio=mutation_ratio)
+        self.gen0.mutation_ratio = mutation_ratio
         self.gen0.popu = popu0
         # 计算适应度
         def single(p):
