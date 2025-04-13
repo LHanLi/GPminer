@@ -141,7 +141,7 @@ class Gen():
                 return ind
             random_select = np.random.randint(len(exp)) 
             deltawmax = 0.1 # 权重改变幅度小于此阈值   # 声明常数 constant
-            deltawmin = 0.02 # 权重改变幅度大于此阈值
+            deltawmin = 0.01 # 权重改变幅度大于此阈值
             max_step = 100 # 寻找新权重组合最大尝试次数
             # 全部权重乘mul，随机选一个因子权重+-d(\
             # 改变random_select的权重可以通过 1.改变该因子的乘数 或 2.改变其他因子的乘数实现)
