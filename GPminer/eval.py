@@ -54,9 +54,9 @@ class Eval():
                     exclude = pd.concat(result, axis=1).all(axis=1)
             else:
                 exclude = pd.Series(False, index=self.market.index)
-            self.market['include'] = include&(~exclude)
+            self.market.loc[:, 'include'] = include&(~exclude)
         else:
-            self.market['include'] = True 
+            self.market.loc[:, 'include'] = True 
     def eval_score(self, scorecode=None):
         #time0 = time.time()
         if scorecode!=None:
@@ -71,10 +71,10 @@ class Eval():
                                                 replace(to_replace={0:np.nan}))
         # 获取打分
         for factor in self.score.exp:
-            self.market[factor[0]+'_score'] = process_factor(factor[0]).groupby('date').\
+            self.market.loc[:, factor[0]+'_score'] = process_factor(factor[0]).groupby('date').\
                 rank(ascending=factor[1])*int(factor[2])
         basescore = [i[0]+'_score' for i in self.score.exp]
-        self.market['score'] = self.market[basescore].sum(axis=1)
+        self.market.loc[:, 'score'] = self.market[basescore].sum(axis=1)
         #ino.log('获取打分耗时', time.time()-time0)
         #time0 = time.time()
     def backtest(self, hold_num, price, code_returns=None, interval=1):
