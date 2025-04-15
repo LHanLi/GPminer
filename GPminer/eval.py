@@ -1,4 +1,5 @@
 import pandas as pd
+pd.options.mode.chained_assignment = None  # 关闭所有链式赋值警告
 import numpy as np
 import FreeBack as FB
 import GPminer as GPm 
